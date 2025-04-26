@@ -1,0 +1,24 @@
+-Separar el desarrollo del proyecto en dos partes, compilador e interfaz grafica para asi concentrarme
+en la logica central sin tener distracciones de la interfaz
+
+-El compilador necesita un Lexer para para convertir el texto de entrada en tokens, un Parser para
+para constuir un AST a partir de los tokens y un interprete o generador de codigo para ejecutar
+las instrucciones
+
+-LEXER:
+  El lexer recorre el codigo fuente caracter por caracter, agrupando secuencias de caracteres
+  en Tokens
+
+-PARSER:
+  El Parser es necesario para validar la estructura semantica del codigo, este utiliza los tokens 
+  creados por el Lexer para formar el arbol de sintaxis abstracta ,verificando que las estructuras
+  como los comandos , asignaciones de variables , funciones y saltos condicionales sigan la gramatica
+  definida en el lenguage
+
+-INTERPRETER:
+  Es el encargado de recorrer el AST y ejecutar las instrucciones ,actualizando el estado de Wall-E
+  y el canvas segun los comandos.Esto incluye manejar variables , evaluar expresiones , ejecutar
+  funciones y gestionar saltos condicionales .
+
+Recordar los manejadores de erroes tanto en el lexer como en el parser para reportar erroreres
+sintacticos y semanticos
