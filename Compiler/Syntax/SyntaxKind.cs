@@ -1,4 +1,4 @@
-namespace Proyecto_Wall_E_Art.Syntax
+namespace Proyecto_Wall_E_Art
 {
         public enum SyntaxKind
     {

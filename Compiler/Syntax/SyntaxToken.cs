@@ -8,13 +8,13 @@ namespace Proyecto_Wall_E_Art
 {
     public sealed class SyntaxToken
     {
-        public SyntaxToken Kind{get;}
+        public SyntaxKind Kind{get;}
         public int Position{get;}
         public int Line{get;}
         public string Text{get;}
         public object Value{get;}
 
-        public SyntaxToken(SyntaxToken kind, int position, int line, string text, object value)
+        public SyntaxToken(SyntaxKind kind, int line, int position, string text, object value)
         {
             Kind = kind;
             Position = position;
