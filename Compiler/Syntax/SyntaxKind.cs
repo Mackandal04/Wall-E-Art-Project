@@ -2,70 +2,68 @@ namespace Proyecto_Wall_E_Art
 {
         public enum SyntaxKind
     {
-        // Basics Tokens
+        // Basics
         NumberToken,
         StringToken,
         IdentifierToken,
-        EndOfLineToken,
 
-        // Operators
+        // Math Operators
         PlusToken,
         MinusToken,
-        MultToken,
-        DivisionToken,
-        ModToken,
-        PowToken,
-        AssignmentToken,
+        MultToken,        // *
+        SlashToken,       // /
+        ModToken,         // %
+        PowToken,       // **
+
+        // Assignment
+        AssignmentToken,  // <-
+
+
 
         // Compare
         GreaterToken,
         LessToken,
         EqualToken,
-        NotEqualToken,
-        GreaterOrEquealToken,
+        GreaterOrEqualToken,
         LessOrEqualToken,
-        AndAndToken,
-        OrOrToken,
+        AndAndToken,            // &&
+        OrOrToken,              // ||
+
+        // Bool Lierals
+        TrueKeyword,    // true
+        FalseKeyword,   // false
 
         // Symbols
         OpenParenthesisToken,
         CloseParenthesisToken,
-        ComaToken,
+        OpenBracketToken,
+        CloseBracketToken,
+        CommaToken,
 
-        // Commands
-        SpawnToken,
-        ColorToken,
-        SizeToken,
-        DrawLineToken,
-        DrawCircleToken,
-        DrawRectangleToken,
-        FillToken,
-        GoToToken,
+        // Comands
+        SpawnKeyword,
+        ColorKeyword,
+        SizeKeyword,
+        DrawLineKeyword,
+        DrawCircleKeyword,
+        DrawRectangleKeyword,
+        FillKeyword,
+        GoToKeyword,
 
+        
         // Functions
-        GetActualXToken,
-        GetActualYToken,
-        GetCanvasSizeToken,
-        GetColorCountToken,
-        IsBrushColorToken,
-        IsBrushSizeToken,
-        IsCanvasColorToken,
+        GetActualXKeyword,
+        GetActualYKeyword,
+        GetCanvasSizeKeyword,
+        GetColorCountKeyword,
+        IsBrushColorKeyword,
+        IsBrushSizeKeyword,
+        IsCanvasColorKeyword,
 
-        // Colors
-        RedKeyword,
-        BlueKeyword,
-        GreenKeyword,
-        YellowKeyword,
-        OrangeKeyword,
-        PurpleKeyword,
-        BlackKeyword,
-        WhiteKeyword,
-        TransparentKeyword,
-
-        // Etiquetas
-        LabelToken,
-
-        // Control
-        EndOfFileToken
+        // Others
+        LabelToken,       
+        WhitespaceToken,
+        EndOfFileToken,
+        ErrorToken
     }
 }

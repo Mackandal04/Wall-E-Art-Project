@@ -8,71 +8,54 @@ namespace Proyecto_Wall_E_Art
 {
     public class LexingSupplies
     {
-        public readonly Dictionary<string, SyntaxKind> KeywordKind = new()
+        public static readonly Dictionary<string, SyntaxKind> KeywordKind = new()
         {
-            //Comandos
-            ["Spawn"] = SyntaxKind.SpawnToken,
-            ["Color"] = SyntaxKind.ColorToken,
-            ["Size"] = SyntaxKind.SizeToken,
-            ["DrawLine"] = SyntaxKind.DrawLineToken,
-            ["DrawnCircle"] = SyntaxKind.DrawCircleToken,
-            ["DrawRectangle"] = SyntaxKind.DrawRectangleToken,
-            ["Fill"] = SyntaxKind.FillToken,
-            ["GoTo"] = SyntaxKind.GoToToken,
+            //Comands
+            ["Spawn"] = SyntaxKind.SpawnKeyword,
+            ["Color"] = SyntaxKind.ColorKeyword,
+            ["Size"] = SyntaxKind.SizeKeyword,
+            ["DrawLine"] = SyntaxKind.DrawLineKeyword,
+            ["DrawCircle"] = SyntaxKind.DrawCircleKeyword,
+            ["DrawRectangle"] = SyntaxKind.DrawRectangleKeyword,
+            ["Fill"] = SyntaxKind.FillKeyword,
+            ["GoTo"] = SyntaxKind.GoToKeyword,
 
             //Functions
-            ["GetActualX"] = SyntaxKind.GetActualXToken,
-            ["GetActualY"] = SyntaxKind.GetActualYToken,
-            ["GetCanvasSize"] = SyntaxKind.GetCanvasSizeToken,
-            ["GetColorCount"] = SyntaxKind.GetColorCountToken,
-            ["IsBrushColor"] = SyntaxKind.IsBrushColorToken,
-            ["IsBrushSize"] = SyntaxKind.IsBrushSizeToken,
-            ["IsCanvasColor"] = SyntaxKind.IsCanvasColorToken,
-
-            //Colors
-            ["Red"] = SyntaxKind.RedKeyword,
-            ["Blue"] = SyntaxKind.BlueKeyword,
-            ["Green"] = SyntaxKind.GreenKeyword,
-            ["Yellow"] = SyntaxKind.YellowKeyword,
-            ["Orange"] = SyntaxKind.OrangeKeyword,
-            ["Purple"] = SyntaxKind.PurpleKeyword,
-            ["Black"] = SyntaxKind.BlackKeyword,
-            ["White"] = SyntaxKind.WhiteKeyword,
-            ["Transparent"] = SyntaxKind.TransparentKeyword
+            ["GetActualX"] = SyntaxKind.GetActualXKeyword,
+            ["GetActualY"] = SyntaxKind.GetActualYKeyword,
+            ["GetCanvasSize"] = SyntaxKind.GetCanvasSizeKeyword,
+            ["GetColorCount"] = SyntaxKind.GetColorCountKeyword,
+            ["IsBrushColor"] = SyntaxKind.IsBrushColorKeyword,
+            ["IsBrushSize"] = SyntaxKind.IsBrushSizeKeyword,
+            ["IsCanvasColor"] = SyntaxKind.IsCanvasColorKeyword,
         };
 
-        public readonly Dictionary<char,Func<int, int, char, (SyntaxToken, int)>> LexMathCharacters = new()
+        public static readonly Dictionary<char,Func<int, int, char, (SyntaxToken, int)>> LexMathCharacters = new()
         {
             ['+'] = (pos,line, _) => (new SyntaxToken(SyntaxKind.PlusToken, line, pos,"+", null!), pos +1),
-            ['-'] = LexMinusOrArrowChar,
+            ['-'] = (pos,line, _) => (new SyntaxToken(SyntaxKind.MinusToken ,line, pos,"-", null!), pos +1),
             ['*'] = LexMultOrPowChar,
-            ['/'] = (pos,line, _) => (new SyntaxToken(SyntaxKind.DivisionToken, line, pos,"/", null!), pos +1),
+            ['/'] = (pos,line, _) => (new SyntaxToken(SyntaxKind.SlashToken, line, pos,"/", null!), pos +1),
             ['%'] = (pos,line, _) => (new SyntaxToken(SyntaxKind.ModToken, line, pos,"%", null!), pos +1),
             ['('] = (pos,line, _) => (new SyntaxToken(SyntaxKind.OpenParenthesisToken, line, pos,"(", null!), pos +1),
             [')'] = (pos,line, _) => (new SyntaxToken(SyntaxKind.CloseParenthesisToken, line, pos,")", null!), pos +1),
-            [','] = (pos,line, _) => (new SyntaxToken(SyntaxKind.ComaToken, line, pos,",", null!), pos +1),
+            ['['] = (pos,line, _) => (new SyntaxToken(SyntaxKind.OpenBracketToken, line, pos,"[", null!), pos +1),
+            [']'] = (pos,line, _) => (new SyntaxToken(SyntaxKind.CloseBracketToken, line, pos,"]", null!), pos +1),
+            [','] = (pos,line, _) => (new SyntaxToken(SyntaxKind.CommaToken, line, pos,",", null!), pos +1),
             ['>'] = LexGreaterThanChar,
-            ['<'] = LexLessThanChar,
+            ['<'] = LexLessOrAssignmentChar,
             ['='] = LexEqualsChar,
-            ['!'] = LexNotEqualChar,
             ['&'] = LexAndsChar,
             ['|'] = LexOrsChar
         };
 
 
-        public SyntaxKind GetKeywordKind(string token)
+        public static SyntaxKind GetKeywordKind(string token)
         {
-            if(KeywordKind.ContainsKey(token))
-                return KeywordKind[token];
+            if (KeywordKind.TryGetValue(token, out SyntaxKind value))
+                return value;
 
             return SyntaxKind.IdentifierToken;
-        }
-        static(SyntaxToken, int) LexMinusOrArrowChar(int pos , int line, char next)
-        {
-            if(next == '>')
-                return (new SyntaxToken( SyntaxKind.AssignmentToken, line, pos, "->", null!), pos +2);
-            
-            return(new SyntaxToken(SyntaxKind.MinusToken, line, pos, "-", null!), pos+1);
         }
         static(SyntaxToken, int) LexMultOrPowChar(int pos, int line, char next)
         {
@@ -85,15 +68,18 @@ namespace Proyecto_Wall_E_Art
         static (SyntaxToken,int) LexGreaterThanChar(int pos, int line, char next)
         {
             if(next == '=')
-                return (new SyntaxToken(SyntaxKind.GreaterOrEquealToken, line,pos, ">=", null!), pos +2);
+                return (new SyntaxToken(SyntaxKind.GreaterOrEqualToken, line,pos, ">=", null!), pos +2);
 
             return (new SyntaxToken(SyntaxKind.GreaterToken, line, pos , ">", null!), pos +1);
         }
 
-        static (SyntaxToken, int) LexLessThanChar(int pos , int line, char next)
+        static (SyntaxToken, int) LexLessOrAssignmentChar(int pos , int line, char next)
         {
             if(next == '=')
                 return (new SyntaxToken(SyntaxKind.LessOrEqualToken, line, pos, "<=", null!), pos +2);
+            
+            else if(next == '-')
+                return (new SyntaxToken(SyntaxKind.AssignmentToken, line, pos, "<-", null!), pos +2);
             
             return(new SyntaxToken(SyntaxKind.LessToken, line, pos, "<", null!), pos +1);
         }
@@ -103,23 +89,14 @@ namespace Proyecto_Wall_E_Art
             if(next == '=')
                 return (new SyntaxToken(SyntaxKind.EqualToken, line, pos , "==", null!), pos+2);
 
-            throw new Exception("Caracter inesperado en la linea " + line + " posicion " + pos);
+            return WrongNext(pos,line,next);
         }
-
-        static (SyntaxToken, int) LexNotEqualChar(int pos, int line, char next)
-        {
-            if(next == '=')
-                return (new SyntaxToken(SyntaxKind.NotEqualToken, line, pos, "!=" , null!), pos +2);
-
-            throw new Exception("Caracter inesperado en la linea " + line + " posicion " + pos);
-        }
-
         static(SyntaxToken, int) LexAndsChar(int pos, int line, char next)
         {
             if(next == '&')
                 return (new SyntaxToken(SyntaxKind.AndAndToken,line, pos, "&&", null!), pos +2);
 
-            throw new Exception ("Caracter inespereado en la linea " + line + " posicion " + pos);
+            return WrongNext(pos,line,next);
         }
         
         static (SyntaxToken, int) LexOrsChar(int pos, int line, char next)
@@ -127,7 +104,14 @@ namespace Proyecto_Wall_E_Art
             if(next == '|')
                 return (new SyntaxToken(SyntaxKind.OrOrToken, line, pos, "||", null!), pos +2);
             
-            throw new Exception("Caracter inesperado en la linea" + line + " posicion " + pos);
+            return WrongNext(pos,line,next);
+        }
+
+        static (SyntaxToken, int) WrongNext(int pos, int line, char next)
+        {
+            Error.SetError("Lexical",$"Unexpected character at line {line}, position {pos}");
+
+            return (new SyntaxToken(SyntaxKind.ErrorToken,line,pos,next.ToString(),null!),pos+1);
         }
     }
 }
