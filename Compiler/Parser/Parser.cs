@@ -11,9 +11,9 @@ namespace Proyecto_Wall_E_Art.Compiler.Parser
 
         public List<SyntaxToken> tokens;
 
-        public Parser(string text )
+        public Parser(IEnumerable<SyntaxToken> tokens)
         {
-
+            
         }
     }
 }
