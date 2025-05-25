@@ -37,7 +37,7 @@ namespace Proyecto_Wall_E_Art
             if (SingleCharTokens.TryGetValue(Current, out var singleKind))
             {
                 var tok = new SyntaxToken(singleKind, line, position, Current.ToString(), null!);
-                position++;
+                Advance();
                 return tok;
             }
 
@@ -48,11 +48,11 @@ namespace Proyecto_Wall_E_Art
                 return LexNumber();
 
             if (char.IsLetter(Current))
-                return LexIdentifier();
+                return LexIdentifierOrLabel();
 
-            Error.SetError("LEXICAL", $"Line {line}: Caracter invalido '{Current}'");
-            var errorToken = new SyntaxToken(SyntaxKind.ErrorToken, line, position, Current.ToString(), null!);
-            position++;
+            string text = Text.Substring(position, 1);
+            var errorToken = new SyntaxToken(SyntaxKind.ErrorToken, line, position, text, null!);
+            Advance();
             return errorToken;
         }
 
@@ -205,7 +205,7 @@ namespace Proyecto_Wall_E_Art
             ['<'] = SyntaxKind.LessToken,
             ['>'] = SyntaxKind.GreaterToken,
         };
-        SyntaxToken LexIdentifier()
+        SyntaxToken LexIdentifierOrLabel()
         {
             var start = position;
 
@@ -217,13 +217,21 @@ namespace Proyecto_Wall_E_Art
             }
 
             Advance();
+
             while (char.IsLetterOrDigit(Current) || Current == '_' || Current == '-')
                 Advance();
 
-            var text = Text.Substring(start, position - start);
-            var kind = LexingSupplies.GetKeywordKind(text);
+            int identLenght = position - start;
+            string identText = Text.Substring(start, identLenght);
 
-            return new SyntaxToken(kind, line, start, text, null!);
+            if (Current == '\n' || Current == '\0')
+            {
+                return new SyntaxToken(SyntaxKind.LabelToken, line, start, identText, identText);
+            }
+
+            SyntaxKind kind = LexingSupplies.GetKeywordKind(identText);
+
+            return new SyntaxToken(kind, line, start, identText, null!);
         }
         
         public IEnumerable<SyntaxToken> LexAll()
@@ -236,7 +244,7 @@ namespace Proyecto_Wall_E_Art
 
                 if (token.Kind == SyntaxKind.ErrorToken)
                 {
-                    throw new LexicalException($"Error lexico en la line {token.Line} : '{token.Text}' ");
+                    throw new Exception($"Token invalido -{token.Text}");
                 }
 
                 yield return token;
@@ -246,18 +254,5 @@ namespace Proyecto_Wall_E_Art
         }
         
         #endregion
-    }
-
-    [Serializable]
-    internal class LexicalException : Exception
-    {
-        public LexicalException()
-        {}
-
-        public LexicalException(string? message) : base(message)
-        {}
-
-        public LexicalException(string? message, Exception? innerException) : base(message, innerException)
-        {}
     }
 }

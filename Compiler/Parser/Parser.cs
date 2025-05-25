@@ -8,31 +8,33 @@ namespace Proyecto_Wall_E_Art
 {
     public sealed class Parser
     {
-        List<SyntaxToken> tokens;
-        int position;
+        List<SyntaxToken> Tokens;
+        int Position;
         SyntaxToken Current => LookAhead(0);//acutal token
 
         public Parser(IEnumerable<SyntaxToken> tokens)
         {
-            this.tokens = tokens.ToList();
-            position = 0;
+            Tokens = tokens.ToList();
+
+            Position = 0;
+
             ParserError.Clear();
         }
 
         SyntaxToken LookAhead(int offset)
         {
-            int index = position + offset;
+            int index = Position + offset;
 
-            if (index < tokens.Count)
-                return tokens[index];
+            if (index < Tokens.Count)
+                return Tokens[index];
 
-            return tokens.Last();
+            return Tokens.Last();
         }
 
         SyntaxToken NextToken()//Se traga el token y sigue para el sgte
         {
             var token = Current;
-            position++;
+            Position++;
             return token;
         }
 
@@ -44,19 +46,100 @@ namespace Proyecto_Wall_E_Art
 
             //Recordar el ErrorParserSetError
             Error.SetError("SYNTAX", errorMsg + $"(found{Current.Text})");
-            return new SyntaxToken(SyntaxKind.ErrorToken, Current.Line, Current.Position, Current.Text, null!);
+
+            //Para evitar toda una linea innecesaria de errores
+            var wrong = Current;
+
+            while (Current.Kind != SyntaxKind.EndOfFileToken)
+                _ = NextToken();
+            return wrong;
         }
 
-        public List<InstructionNode> ParseProgram()
+        public ProgramNode ParseProgram()
         {
+            //retorna el AST completo de un programa
+
             var instructions = new List<InstructionNode>();
 
+            instructions.Add(ParseInstruction());
+
+            if (!(instructions[0] is SpawnNode))
+                throw new SyntaxException("El programa debe comenzar siempre con Spawn");
+                
             while (Current.Kind != SyntaxKind.EndOfFileToken)
             {
                 instructions.Add(ParseInstruction());
             }
 
-            return instructions;
+            return new ProgramNode(instructions,Current.Line);
+        }
+
+        InstructionNode ParseInstruction()//Escoge el parseo segun el token
+        {
+            // if (Current.Kind == SyntaxKind.IdentifierToken)
+            // {
+            //     if (LookAhead(1).Kind == SyntaxKind.AssignmentToken)
+            //         return ParseAssignment();
+            // }
+
+            switch (Current.Kind)
+            {
+                case SyntaxKind.SpawnKeyword: return ParseSpawn();
+                case SyntaxKind.ColorKeyword: return ParseColor();
+                case SyntaxKind.SizeKeyword: return ParseSize();
+                case SyntaxKind.DrawLineKeyword: return ParseDrawLine();
+                case SyntaxKind.DrawCircleKeyword: return ParseDrawCircle();
+                case SyntaxKind.DrawRectangleKeyword: return ParseDrawRectangle();
+                case SyntaxKind.FillKeyword: return ParseFill();
+                case SyntaxKind.IdentifierToken when LookAhead(1).Kind == SyntaxKind.AssignmentToken: return ParseAssignment();
+                case SyntaxKind.LabelToken: return ParseLabel();
+                case SyntaxKind.GoToKeyword: return ParseGoTo();
+                // case SyntaxKind.GetActualXKeyword: return ParseGetActualX();
+                // case SyntaxKind.GetActualYKeyword: return ParseGetActualY();
+                // case SyntaxKind.GetCanvasSizeKeyword: return ParseGetCanvasSize();
+                // case SyntaxKind.GetColorCountKeyword: return ParseGetColorCount();
+                // case SyntaxKind.IsBrushColorKeyword: return ParseIsBrushColor();
+                // case SyntaxKind.IsBrushSizeKeyword: return ParseIsBrushSize();
+                // case SyntaxKind.IsCanvasColorKeyword: return ParseIsCanvasColor();
+
+                default:
+                    Error.SetError("SYNTAX", $"Instruccion desconocida: {Current.Text} linea : {Current.Line}");
+
+                    while (Current.Kind != SyntaxKind.EndOfFileToken && Current.Kind != SyntaxKind.NewLineToken)
+                        _ = NextToken();
+
+                    return null!;
+            }
+        }
+
+        private InstructionNode ParseGoTo()
+        {
+            throw new NotImplementedException();
+        }
+
+        private InstructionNode ParseLabel()
+        {
+            throw new NotImplementedException();
+        }
+
+        private InstructionNode ParseFill()
+        {
+            throw new NotImplementedException();
+        }
+
+        private InstructionNode ParseDrawRectangle()
+        {
+            throw new NotImplementedException();
+        }
+
+        private InstructionNode ParseDrawCircle()
+        {
+            throw new NotImplementedException();
+        }
+
+        private InstructionNode ParseDrawLine()
+        {
+            throw new NotImplementedException();
         }
 
         ExpressionNode ParseExpression(int parentPrecedence = 0)
@@ -112,39 +195,6 @@ namespace Proyecto_Wall_E_Art
 
             Error.SetError("SYNTAX", $"Se esperaba expresión primaria, se encontro '{Current.Text}'");
             return new LiteralNode(new SyntaxToken(SyntaxKind.ErrorToken, Current.Line, Current.Position, Current.Text, null!));
-        }
-
-        InstructionNode ParseInstruction()//Escoge el parseo segun el token
-        {
-            if (Current.Kind == SyntaxKind.IdentifierToken)
-            {
-                if (LookAhead(1).Kind == SyntaxKind.AssignmentToken)
-                    return ParseAssignment();
-            }
-
-            switch (Current.Kind)
-            {
-                case SyntaxKind.SpawnKeyword: return ParseSpawn();
-                case SyntaxKind.ColorKeyword: return ParseColor();
-                case SyntaxKind.SizeKeyword: return ParseSize();
-                // case SyntaxKind.DrawLineKeyword: return ParseDrawLine();
-                // case SyntaxKind.DrawCircleKeyword: return ParseDrawCircle();
-                // case SyntaxKind.DrawRectangleKeyword: return ParseDrawRectangle();
-                // case SyntaxKind.FillKeyword: return ParseFill();
-                // case SyntaxKind.GoToKeyword: return ParseGoTo();
-                // case SyntaxKind.GetActualXKeyword: return ParseGetActualX();
-                // case SyntaxKind.GetActualYKeyword: return ParseGetActualY();
-                // case SyntaxKind.GetCanvasSizeKeyword: return ParseGetCanvasSize();
-                // case SyntaxKind.GetColorCountKeyword: return ParseGetColorCount();
-                // case SyntaxKind.IsBrushColorKeyword: return ParseIsBrushColor();
-                // case SyntaxKind.IsBrushSizeKeyword: return ParseIsBrushSize();
-                // case SyntaxKind.IsCanvasColorKeyword: return ParseIsCanvasColor();
-
-                default:
-                    Error.SetError("SYNTAX", $"Unexpected token '{Current.Text}'");
-                    NextToken();
-                    return null!;
-            }
         }
 
         //Falta analizar los label
@@ -225,5 +275,15 @@ namespace Proyecto_Wall_E_Art
 
         //     return new FillNode();
         // }
+    }
+
+    [Serializable]
+    internal class SyntaxException : Exception
+    {
+        public SyntaxException(){}
+
+        public SyntaxException(string? message) : base(message){}
+
+        public SyntaxException(string? message, Exception? innerException) : base(message, innerException){}
     }
 }
