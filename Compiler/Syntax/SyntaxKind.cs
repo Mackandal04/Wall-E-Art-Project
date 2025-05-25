@@ -6,6 +6,7 @@ namespace Proyecto_Wall_E_Art
         NumberToken,
         StringToken,
         IdentifierToken,
+        NewLineToken, // \n
 
         // Math Operators
         PlusToken,

@@ -6,35 +6,32 @@ using Proyecto_Wall_E_Art;
 
 namespace Proyecto_Wall_E_Art
 {
-    internal sealed class Lexer 
-    { 
-        private readonly string Text; 
-        private int position = 0; 
-        private int line = 1;
-        private char Current => Peek(0);
-        private char NextChar => Peek(1);
+    internal sealed class Lexer
+    {
+        readonly string Text;
+        int position = 0;
+        int line = 1;
+        char Current => Peek(0);
+        char NextChar => Peek(1);
 
         public Lexer(string text)
         {
+            //Si recibe null lo convierte en el string vacio
             Text = text ?? string.Empty;
         }
 
-        public SyntaxToken Lex() //Recorrer caracter a caracter
+        public SyntaxToken Lex() //Recorrer y devolver token a token
         {
             if (position >= Text.Length)
                 return new SyntaxToken(SyntaxKind.EndOfFileToken, line, position, string.Empty, null!);
 
-            if (Current == '"')
-                return LexString();
-
             if (Current == '<' && NextChar == '-')
                 return LexAssignment();
 
-            if ((Current == '=' && NextChar == '=') ||
-                (Current == '<' && NextChar == '=') ||
-                (Current == '>' && NextChar == '=') ||
-                (Current == '&' && NextChar == '&') ||
-                (Current == '|' && NextChar == '|'))
+            if (Current == '"')
+                return LexString();
+
+            if (IsTwoCharOperator())
                 return LexTwoCharOperator();
 
             if (SingleCharTokens.TryGetValue(Current, out var singleKind))
@@ -42,13 +39,6 @@ namespace Proyecto_Wall_E_Art
                 var tok = new SyntaxToken(singleKind, line, position, Current.ToString(), null!);
                 position++;
                 return tok;
-            }
-
-            if (LexingSupplies.LexMathCharacters.TryGetValue(Current,out Func<int, int, char, (SyntaxToken token, int newPos)> opFunc))
-            {
-                var (token, newPos) = opFunc(position, line, NextChar);
-                position = newPos;
-                return token;
             }
 
             if (char.IsWhiteSpace(Current))
@@ -60,58 +50,26 @@ namespace Proyecto_Wall_E_Art
             if (char.IsLetter(Current))
                 return LexIdentifier();
 
-            // Unexpected character
-            Error.SetError("LEXICAL", $"Line {line}: Unexpected character '{Current}'");
+            Error.SetError("LEXICAL", $"Line {line}: Caracter invalido '{Current}'");
             var errorToken = new SyntaxToken(SyntaxKind.ErrorToken, line, position, Current.ToString(), null!);
             position++;
             return errorToken;
         }
 
-        public IEnumerable<SyntaxToken> LexAll()
-        {
-            SyntaxToken token;
-            
-            do
-            {
-                token = Lex();
-                
-                if (token.Kind == SyntaxKind.ErrorToken)
-                {
-                    System.Console.WriteLine($"WrongToken -{token.Text}");
-                    throw new Exception("InvalidToken");
-                }
+        #region Main
 
-                yield return token;
-
-            } 
-            while (token.Kind != SyntaxKind.EndOfFileToken);
-        }
-
-        #region Helpers
-
-        private char Peek(int offset)
+        char Peek(int offset)
         {
             var idx = position + offset;
             return idx >= Text.Length ? '\0' : Text[idx];
         }
 
-        private void Advance(int count = 1)
+        void Advance(int count = 1)
         {
             position += count;
         }
 
-        private static readonly Dictionary<char, SyntaxKind> SingleCharTokens = new()
-        {
-            ['('] = SyntaxKind.OpenParenthesisToken,
-            [')'] = SyntaxKind.CloseParenthesisToken,
-            ['['] = SyntaxKind.OpenBracketToken,
-            [']'] = SyntaxKind.CloseBracketToken,
-            [','] = SyntaxKind.CommaToken,
-        };
-
-        #endregion
-
-        private SyntaxToken LexString() //Lexeando cada token
+        SyntaxToken LexString() //Lexeando cada token
         {
             var start = position;
             Advance();
@@ -119,16 +77,13 @@ namespace Proyecto_Wall_E_Art
 
             while (Current != '\0' && (Current != '"' || escaped))
             {
-                if (Current == '\\')
-                    escaped = !escaped;
-                else
-                    escaped = false;
-
                 if (Current == '\n')
-                    line++;
-
-                Advance();
+                {
+                    Error.SetError("SYNTAX", $"Line {line}: String no puede tener saltos de linea");
+                    return new SyntaxToken(SyntaxKind.ErrorToken, line, position, Text.Substring(start), null!);
+                }
             }
+
             if (Current == '\0')
             {
                 Error.SetError("SYNTAX", $"Line {line}: Unterminated string literal");
@@ -136,63 +91,16 @@ namespace Proyecto_Wall_E_Art
             }
 
             Advance();
-            var raw = Text.Substring(start, position - start);
-            var value = ParsingSupplies.BackSlashEval(raw, line)[1..^1];
+            var raw = Text.Substring(start, position - start); //raw almacena el texto original
 
-            return Error.wrong
-                ? new SyntaxToken(SyntaxKind.ErrorToken, line, start, raw, null!)
-                : new SyntaxToken(SyntaxKind.StringToken, line, start, raw, value);
+            var value = raw.Substring(1, raw.Length - 2); //elimina las comillas del principio y fin
+
+            string processed = value.Replace("\\\"", "\"").Replace("\\\\", "\\");
+
+            return new SyntaxToken(SyntaxKind.StringToken, line, start, raw, processed);
         }
 
-        private SyntaxToken LexAssignment()
-        {
-            var start = position;
-            Advance(2);
-            return new SyntaxToken(SyntaxKind.AssignmentToken, line, start, "<-", null!);
-        }
-
-        private SyntaxToken LexTwoCharOperator()
-        {
-            int start = position;
-            string op = Text.Substring(position, 2);
-
-            Advance(2);
-
-            if(op == "==")
-                return (new SyntaxToken(SyntaxKind.EqualToken,line,start,op, null!));
-
-            if(op == ">=")
-                return (new SyntaxToken(SyntaxKind.GreaterOrEqualToken,line,start,op, null!));
-
-            if(op == "<=")
-                return (new SyntaxToken(SyntaxKind.LessOrEqualToken,line,start,op, null!));
-
-            if(op == "&&")
-                return (new SyntaxToken(SyntaxKind.AndAndToken,line,start,op, null!));
-
-            if(op == "||")
-                return (new SyntaxToken(SyntaxKind.OrOrToken,line,start,op, null!));
-
-            
-            Error.SetError("Lexical",$"Unexpected character{op} at line {line}");
-
-            return (new SyntaxToken(SyntaxKind.ErrorToken,line,start,op, null!));
-        }
-
-        private SyntaxToken LexWhitespace()
-        {
-            var start = position;
-            while (char.IsWhiteSpace(Current))
-            {
-                if (Current == '\n')
-                    line++;
-                Advance();
-            }
-            var text = Text.Substring(start, position - start);
-            return new SyntaxToken(SyntaxKind.WhitespaceToken, line, start, text, null!);
-        }
-
-        private SyntaxToken LexNumber()
+        SyntaxToken LexNumber()
         {
             var start = position;
             while (char.IsDigit(Current))
@@ -208,20 +116,148 @@ namespace Proyecto_Wall_E_Art
             return new SyntaxToken(SyntaxKind.NumberToken, line, start, text, value);
         }
 
-        private SyntaxToken LexIdentifier()
+
+        SyntaxToken LexWhitespace()
+        {
+            // tambien se analiza \n
+            var start = position;
+
+            if (Current == '\n')
+            {
+                position++;
+                line++;
+                return new SyntaxToken(SyntaxKind.NewLineToken, line, start, "\n", null!);
+            }
+
+            while (char.IsWhiteSpace(Current) && Current != '\n')
+            {
+                Advance();
+            }
+
+            var text = Text.Substring(start, position - start);
+
+            return new SyntaxToken(SyntaxKind.WhitespaceToken, line, start, text, null!);
+        }
+
+        SyntaxToken LexAssignment()
         {
             var start = position;
-            Advance();
+            Advance(2);  //consume <-
+            return new SyntaxToken(SyntaxKind.AssignmentToken, line, start, "<-", null!);
+        }
 
-            while (char.IsLetterOrDigit(Current) || Current == '_'  ||Current == '-')
+        bool IsTwoCharOperator()
+        {
+            if ((Current == '=' && NextChar == '=') ||
+                    (Current == '<' && NextChar == '=') ||
+                    (Current == '>' && NextChar == '=') ||
+                    (Current == '&' && NextChar == '&') ||
+                    (Current == '|' && NextChar == '|') ||
+                    (Current == '*' && NextChar == '*'))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+
+        SyntaxToken LexTwoCharOperator()
+        {
+            int start = position;
+
+            string op = Text.Substring(position, 2);
+
+            SyntaxKind kind = op switch
+            {
+                "==" => SyntaxKind.EqualToken,
+                ">=" => SyntaxKind.GreaterOrEqualToken,
+                "<=" => SyntaxKind.LessOrEqualToken,
+                "&&" => SyntaxKind.AndAndToken,
+                "||" => SyntaxKind.OrOrToken,
+                "**" => SyntaxKind.PowToken,
+                _ => SyntaxKind.ErrorToken
+            };
+
+            Advance(2);
+
+            return kind == SyntaxKind.ErrorToken ? ReportError(op, start) : new SyntaxToken(kind, line, start, op, null!);
+        }
+
+        private SyntaxToken ReportError(string op, int start)
+        {
+            Error.SetError("LEXICAL", $"Line {line}: Token inválido '{op}'");
+            return new SyntaxToken(SyntaxKind.ErrorToken, line, start, op, null!);
+        }
+
+        static readonly Dictionary<char, SyntaxKind> SingleCharTokens = new()
+        {
+            ['('] = SyntaxKind.OpenParenthesisToken,
+            [')'] = SyntaxKind.CloseParenthesisToken,
+            ['['] = SyntaxKind.OpenBracketToken,
+            [']'] = SyntaxKind.CloseBracketToken,
+            [','] = SyntaxKind.CommaToken,
+            ['+'] = SyntaxKind.PlusToken,
+            ['-'] = SyntaxKind.MinusToken,
+            ['*'] = SyntaxKind.MultToken,
+            ['/'] = SyntaxKind.SlashToken,
+            ['%'] = SyntaxKind.ModToken,
+            ['<'] = SyntaxKind.LessToken,
+            ['>'] = SyntaxKind.GreaterToken,
+        };
+        SyntaxToken LexIdentifier()
+        {
+            var start = position;
+
+            if (char.IsDigit(Current) || Current == '-')
+            {
+                Error.SetError("LEXICAL", $"Line{line} : Identifier invalid :{Current}");
+                Advance();
+                return new SyntaxToken(SyntaxKind.ErrorToken, line, start, Text.Substring(start, 1), null!);
+            }
+
+            Advance();
+            while (char.IsLetterOrDigit(Current) || Current == '_' || Current == '-')
                 Advance();
 
             var text = Text.Substring(start, position - start);
             var kind = LexingSupplies.GetKeywordKind(text);
-            var value = kind == SyntaxKind.ColorKeyword ? text : null!;
 
-            return new SyntaxToken(kind, line, start, text, value);
+            return new SyntaxToken(kind, line, start, text, null!);
         }
-}
+        
+        public IEnumerable<SyntaxToken> LexAll()
+        {
+            SyntaxToken token;
 
+            do
+            {
+                token = Lex();
+
+                if (token.Kind == SyntaxKind.ErrorToken)
+                {
+                    throw new LexicalException($"Error lexico en la line {token.Line} : '{token.Text}' ");
+                }
+
+                yield return token;
+
+            }
+            while (token.Kind != SyntaxKind.EndOfFileToken);
+        }
+        
+        #endregion
+    }
+
+    [Serializable]
+    internal class LexicalException : Exception
+    {
+        public LexicalException()
+        {}
+
+        public LexicalException(string? message) : base(message)
+        {}
+
+        public LexicalException(string? message, Exception? innerException) : base(message, innerException)
+        {}
+    }
 }

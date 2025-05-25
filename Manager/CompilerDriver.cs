@@ -2,20 +2,19 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Proyecto_Wall_E_Art;
 
 namespace Proyecto_Wall_E_Art
 {
     public class CompilerDriver
     {
-        public bool ContainsError { get; }
-        public readonly IEnumerable<SyntaxToken> tokens;
-
+        public IEnumerable<SyntaxToken> tokens {get;}
+        public List<SyntaxNode>SyntaxTree{get;}
         public CompilerDriver(string text)
         {
             var lexer = new Lexer(text);
-            
-            this.tokens = lexer.LexAll();
-            
+            tokens = lexer.LexAll().ToList();
+            var parser = new Parser(tokens);
         }
     }
 }

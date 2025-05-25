@@ -4,9 +4,9 @@
     using System.Threading.Tasks;
     using Proyecto_Wall_E_Art;
 
-    CompilerDriver compilerDriver  = new CompilerDriver("@x+3");
+    CompilerDriver compilerDriver  = new CompilerDriver("Spawn(0,0)");
 
-    foreach (var item in compilerDriver.tokens)
-    {
-        System.Console.WriteLine(item.Kind);
-    }
+    // foreach (var item in compilerDriver.tokens)
+    // {
+    //     System.Console.WriteLine(item.Kind);
+    // }
