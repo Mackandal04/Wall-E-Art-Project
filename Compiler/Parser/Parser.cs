@@ -11,19 +11,18 @@ namespace Proyecto_Wall_E_Art
         List<SyntaxToken> Tokens;
         int Position;
         SyntaxToken Current => LookAhead(0);//acutal token
+        bool IsAtEnd => Current.Kind == SyntaxKind.EndOfFileToken;
 
         public Parser(IEnumerable<SyntaxToken> tokens)
         {
             Tokens = tokens.ToList();
 
             Position = 0;
-
-            ParserError.Clear();
         }
 
-        SyntaxToken LookAhead(int offset)
+        SyntaxToken LookAhead(int advance)
         {
-            int index = Position + offset;
+            int index = Position + advance;
 
             if (index < Tokens.Count)
                 return Tokens[index];
@@ -44,14 +43,14 @@ namespace Proyecto_Wall_E_Art
             if (Current.Kind == kind)
                 return NextToken();
 
-            //Recordar el ErrorParserSetError
-            Error.SetError("SYNTAX", errorMsg + $"(found{Current.Text})");
+            ErrorsCollecter.Add("SYNTAX", errorMsg + $" Encontrado {Current.Text}", Current.Line);
 
             //Para evitar toda una linea innecesaria de errores
             var wrong = Current;
 
-            while (Current.Kind != SyntaxKind.EndOfFileToken)
-                _ = NextToken();
+            while (!IsAtEnd && Current.Kind != SyntaxKind.NewLineToken)
+                NextToken();
+
             return wrong;
         }
 
@@ -59,28 +58,28 @@ namespace Proyecto_Wall_E_Art
         {
             //retorna el AST completo de un programa
 
+            ErrorsCollecter.ErrorsClear();
+
             var instructions = new List<InstructionNode>();
 
-            instructions.Add(ParseInstruction());
+            if (Current.Kind != SyntaxKind.SpawnKeyword)
+            {
+                ErrorsCollecter.Add("SYNTAX", "El programa debe comenzar con Spawn", Current.Line);
+            }
+            instructions.Add(ParseSpawn());
 
-            if (!(instructions[0] is SpawnNode))
-                throw new SyntaxException("El programa debe comenzar siempre con Spawn");
-                
-            while (Current.Kind != SyntaxKind.EndOfFileToken)
+            //Parsea hasta el final
+            while (!IsAtEnd)
             {
                 instructions.Add(ParseInstruction());
             }
 
-            return new ProgramNode(instructions,Current.Line);
+            return new ProgramNode(instructions, Current.Line);
         }
 
-        InstructionNode ParseInstruction()//Escoge el parseo segun el token
+        InstructionNode ParseInstruction()
         {
-            // if (Current.Kind == SyntaxKind.IdentifierToken)
-            // {
-            //     if (LookAhead(1).Kind == SyntaxKind.AssignmentToken)
-            //         return ParseAssignment();
-            // }
+            //Escoge el parseo segun el token
 
             switch (Current.Kind)
             {
@@ -94,96 +93,260 @@ namespace Proyecto_Wall_E_Art
                 case SyntaxKind.IdentifierToken when LookAhead(1).Kind == SyntaxKind.AssignmentToken: return ParseAssignment();
                 case SyntaxKind.LabelToken: return ParseLabel();
                 case SyntaxKind.GoToKeyword: return ParseGoTo();
-                // case SyntaxKind.GetActualXKeyword: return ParseGetActualX();
-                // case SyntaxKind.GetActualYKeyword: return ParseGetActualY();
-                // case SyntaxKind.GetCanvasSizeKeyword: return ParseGetCanvasSize();
-                // case SyntaxKind.GetColorCountKeyword: return ParseGetColorCount();
-                // case SyntaxKind.IsBrushColorKeyword: return ParseIsBrushColor();
-                // case SyntaxKind.IsBrushSizeKeyword: return ParseIsBrushSize();
-                // case SyntaxKind.IsCanvasColorKeyword: return ParseIsCanvasColor();
 
+
+                //si no coincide con una instruccion valida registra el error
                 default:
-                    Error.SetError("SYNTAX", $"Instruccion desconocida: {Current.Text} linea : {Current.Line}");
+                    ErrorsCollecter.Add("SYNTAX", $"Instruccion desconocida: {Current.Text}", Current.Line);
 
-                    while (Current.Kind != SyntaxKind.EndOfFileToken && Current.Kind != SyntaxKind.NewLineToken)
-                        _ = NextToken();
+                    while (!IsAtEnd && Current.Kind != SyntaxKind.NewLineToken)
+                        NextToken();
 
                     return null!;
             }
         }
 
-        private InstructionNode ParseGoTo()
+
+        List<ExpressionNode> ParseParameters()
         {
-            throw new NotImplementedException();
+            Match(SyntaxKind.OpenParenthesisToken, "Se esperaba un '(' ");
+
+            List<ExpressionNode> args = new List<ExpressionNode>();
+
+            if (Current.Kind != SyntaxKind.CloseParenthesisToken)
+            {
+                //hay parametros
+                args.Add(ParseExpression());
+
+                while (Current.Kind == SyntaxKind.CommaToken)
+                {
+                    NextToken(); //trrago la coma
+                    args.Add(ParseExpression());
+                }
+            }
+
+            Match(SyntaxKind.CloseParenthesisToken, "Se esperaba un ')' antes de finalizar ");
+
+            return args;
         }
 
         private InstructionNode ParseLabel()
         {
-            throw new NotImplementedException();
+            var labelToken = Match(SyntaxKind.LabelToken, "Se esperaba un label");
+
+            return new LabelNode(labelToken.Text, labelToken.Line);
+        }
+        private InstructionNode ParseGoTo()
+        {
+            Match(SyntaxKind.GoToKeyword, "Se esperaba 'GoTo'");
+
+            Match(SyntaxKind.OpenBracketToken, "Se esperaba '['");
+
+            var labelToken = Match(SyntaxKind.LabelToken, "Se esperaba un label dentro de GoTo");
+
+            Match(SyntaxKind.CloseBracketToken, "Se esperaba ']'");
+
+            Match(SyntaxKind.OpenParenthesisToken, "Se esperaba '(' tras el label");
+
+            var condition = ParseExpression();
+
+            Match(SyntaxKind.CloseParenthesisToken, "Se esperaba ')'");
+
+            return new GoToNode(labelToken.Text, condition, labelToken.Line);
+
         }
 
-        private InstructionNode ParseFill()
-        {
-            throw new NotImplementedException();
-        }
 
-        private InstructionNode ParseDrawRectangle()
+        InstructionNode ParseFill()
         {
-            throw new NotImplementedException();
-        }
+            Match(SyntaxKind.FillKeyword, "Se esperaba 'Fill' ");
 
-        private InstructionNode ParseDrawCircle()
-        {
-            throw new NotImplementedException();
-        }
+            if (Current.Kind == SyntaxKind.OpenParenthesisToken)
+            {
+                var args = ParseParameters();
+                if (args.Count > 0)
+                    ErrorsCollecter.Add("SYNTAX", "Fill no recibe parámetros", Current.Line);
+            }
 
-        private InstructionNode ParseDrawLine()
-        {
-            throw new NotImplementedException();
+            else
+                ErrorsCollecter.Add("SYNTAX", "Se esperaba () despues de Fill", Current.Line);
+
+            return new FillNode(Current.Line);
         }
 
         ExpressionNode ParseExpression(int parentPrecedence = 0)
         {
-            ExpressionNode left;
+            return ParseBinaryExpression(parentPrecedence);
 
-            if (ParsingSupplies.GetUnaryOperatorPrecedence(Current.Kind) > 0)
-            {
-                var op = NextToken();
-                var operand = ParseExpression(ParsingSupplies.GetUnaryOperatorPrecedence(op.Kind));
-                left = new UnaryExpressionNode(op, operand);
-            }
-            else
-                left = ParsePrimary();
+
+            // ExpressionNode left;
+
+            // if (ParsingSupplies.GetUnaryOperatorPrecedence(Current.Kind) > 0)
+            // {
+            //     var op = NextToken();
+            //     var operand = ParseExpression(ParsingSupplies.GetUnaryOperatorPrecedence(op.Kind));
+            //     left = new UnaryExpressionNode(op, operand);
+            // }
+            // else
+            //     left = ParsePrimary();
+
+            // while (true)
+            // {
+            //     var precedence = ParsingSupplies.GetBinaryOperatorPrecedence(Current.Kind);
+            //     if (precedence == 0 || precedence <= parentPrecedence)
+            //         break;
+
+            //     var op = NextToken();
+            //     var right = ParseExpression(precedence);
+            //     left = new BinaryExpressionNode(left, op, right);
+            // }
+
+            // return left;
+        }
+
+        ExpressionNode ParseBinaryExpression(int parentPrecedence)
+        {
+            ExpressionNode left = ParseUnaryOrPrimary();
 
             while (true)
             {
-                var precedence = ParsingSupplies.GetBinaryOperatorPrecedence(Current.Kind);
-                if (precedence == 0 || precedence <= parentPrecedence)
+                int precedence = Current.Kind.GetBinaryOperatorPrecedence();
+
+                if (precedence == 0 || precedence < parentPrecedence)
                     break;
 
-                var op = NextToken();
-                var right = ParseExpression(precedence);
-                left = new BinaryExpressionNode(left, op, right);
+                var opToken = Current;
+
+                NextToken();
+
+                if (!EsOperadorBinarioValido(opToken.Kind))
+                {
+                    ErrorsCollecter.Add("SYNTAX", $"Operador binario inesperado: '{opToken.Text}'", opToken.Line);
+                    return new InvalidExpressionNode($"Operador inesperado: '{opToken.Text}'", opToken.Line);
+                }
+
+                var right = ParseBinaryExpression(precedence + 1);
+
+                var op = MapToBinaryOperator(opToken.Kind);
+                left = new BinaryExpressionNode(left, op, right, opToken.Line);
             }
 
             return left;
         }
 
-        private ExpressionNode ParsePrimary()
+        bool EsOperadorBinarioValido(SyntaxKind kind)
         {
-            if (Current.Kind == SyntaxKind.NumberToken)
-                return new LiteralNode(NextToken());
+            return kind == SyntaxKind.PlusToken
+                || kind == SyntaxKind.MinusToken
+                || kind == SyntaxKind.MultToken
+                || kind == SyntaxKind.SlashToken
+                || kind == SyntaxKind.ModToken
+                || kind == SyntaxKind.LessToken
+                || kind == SyntaxKind.LessOrEqualToken
+                || kind == SyntaxKind.GreaterToken
+                || kind == SyntaxKind.GreaterOrEqualToken
+                || kind == SyntaxKind.EqualToken
+                || kind == SyntaxKind.AndAndToken
+                || kind == SyntaxKind.OrOrToken
+                || kind == SyntaxKind.PowToken;
+        }
 
-            if (Current.Kind == SyntaxKind.IdentifierToken)
+        ExpressionNode ParseUnaryOrPrimary()
+        {
+            var unaryPrec = Current.Kind.GetUnaryOperatorPrecedence();
+
+            if (unaryPrec > 0)
             {
-                if (LookAhead(1).Kind == SyntaxKind.OpenParenthesisToken)
-                    return ParseFunctionCall();
+                //solo manejamos '-' o '!'
+                var opKind = (Current.Kind == SyntaxKind.MinusToken)
+                ? UnaryOperator.Minus
+                : UnaryOperator.Not;
 
-                return new VariableNode(NextToken());
+                var opToken = Current;
+                NextToken();
+
+                var operand = ParseUnaryOrPrimary();
+
+                if (operand is InvalidExpressionNode)
+                    return new InvalidExpressionNode("Error en operador unario", opToken.Line);
             }
 
+            return ParsePrimary();
+        }
+
+        private ExpressionNode ParsePrimary()
+        {
+            //numbers
+            if (Current.Kind == SyntaxKind.NumberToken)
+            {
+                var text = Current.Text;
+
+                var token = Current;
+
+                NextToken();
+
+                if (int.TryParse(text, out int value))
+                    return new LiteralNode(value, Current.Line);
+
+                ErrorsCollecter.Add("SYNTAX", $"Número inválido '{text}'", Current.Line);
+                return new InvalidExpressionNode($"Número inválido '{text}'", Current.Line);
+            }
+
+            // 2) strings
+            if (Current.Kind == SyntaxKind.StringToken)
+            {
+                var raw = Current.Text;
+
+                var token = Current;
+
+                NextToken();
+
+                var str = raw[1..^1];        // quitar las comillas
+
+                return new LiteralNode(str, Current.Line);
+            }
+
+            // 3) bools
+            if (Current.Kind == SyntaxKind.TrueKeyword || Current.Kind == SyntaxKind.FalseKeyword)
+            {
+                bool val = Current.Kind == SyntaxKind.TrueKeyword;
+
+                var token = Current;
+
+                NextToken();
+
+                return new LiteralNode(val, Current.Line);
+            }
+
+            // 4) Variable o llamada a función
+            if (Current.Kind == SyntaxKind.IdentifierToken)
+            {
+                var name = Current.Text;
+
+                var token = Current;
+
+                NextToken();
+
+                if (Current.Kind == SyntaxKind.OpenParenthesisToken)
+                {
+                    var args = ParseParameters();  // lista de ExpressionNode
+                    
+                    // Mapeo a FunctionKind
+                    if (Enum.TryParse<FunctionKind>(name, out var kind))
+                        return new BuiltInFunctionNode(kind, args, token.Line);
+
+                    ErrorsCollecter.Add("SYNTAX", $"Función desconocida '{name}'", token.Line);
+                    return new InvalidExpressionNode($"Función desconocida '{name}'", token.Line);
+                }
+
+                return new VariableNode(name, Current.Line);
+            }
+
+            // 5) Subexpresión entre paréntesis
             if (Current.Kind == SyntaxKind.OpenParenthesisToken)
             {
+                var token = Current;
+
                 NextToken();
 
                 var expr = ParseExpression();
@@ -193,97 +356,143 @@ namespace Proyecto_Wall_E_Art
                 return expr;
             }
 
-            Error.SetError("SYNTAX", $"Se esperaba expresión primaria, se encontro '{Current.Text}'");
-            return new LiteralNode(new SyntaxToken(SyntaxKind.ErrorToken, Current.Line, Current.Position, Current.Text, null!));
+            var wrong = Current;
+            ErrorsCollecter.Add("SYNTAX", $"Se esperaba expresión primaria, encontró '{wrong.Text}'", wrong.Line);
+            NextToken();
+            return new InvalidExpressionNode($"Token inesperado '{wrong.Text}'", wrong.Line);
         }
 
-        //Falta analizar los label
         InstructionNode ParseAssignment()
         {
-            var idToken = NextToken(); //Consume la variable
+            var idToken = Match(SyntaxKind.IdentifierToken, "Se esperaba identifier");
 
-            Match(SyntaxKind.AssignmentToken, "Se esperaba <- para asignacion");
+            Match(SyntaxKind.AssignmentToken, "Se esperaba '<-'");
 
-            var expression = ParseExpression();
+            var expr = ParseExpression();
 
-            return new AssignmentNode(idToken, expression);
+            return new AssignmentNode(idToken.Text, expr, idToken.Line);
         }
 
         InstructionNode ParseSpawn()
         {
-            NextToken();
+            Match(SyntaxKind.SpawnKeyword, "Se esperaba un 'Spawn' ");
 
-            Match(SyntaxKind.OpenParenthesisToken, "Se esperaba un '(' despues de 'Spawn' ");
+            var parameters = ParseParameters();
 
-            var leftExpression = ParseExpression();
+            if (parameters.Count != 2)
+                ErrorsCollecter.Add("SYNTAX", "Spawn requiere solo 2 parametros", Current.Line);
 
-            Match(SyntaxKind.CommaToken, "Se esperana una ',' despues de la expresion de la izquierda");
+            //Si spawn tiene coordenadas las asignamos , si no => (0,0)
+            var xExpr = parameters.ElementAtOrDefault(0) ?? new LiteralNode(0, Current.Line);
 
-            var rightExpression = ParseExpression();
+            var yExpr = parameters.ElementAtOrDefault(1) ?? new LiteralNode(0, Current.Line);
 
-            Match(SyntaxKind.CloseParenthesisToken, "Se esperaba ')' despues de la expresion de la derecha");
-
-            return new SpawnNode(leftExpression, rightExpression);
+            return new SpawnNode(xExpr, yExpr, Current.Line);
         }
+
         InstructionNode ParseColor()
         {
-            NextToken();
+            Match(SyntaxKind.ColorKeyword, "Se esperaba 'Color' ");
 
-            Match(SyntaxKind.OpenParenthesisToken, "Se esperaba '(' tras Color");
+            var parameters = ParseParameters();
 
-            var color = Match(SyntaxKind.StringToken, "Se esperaba un string de color");
+            if (parameters.Count != 1)
+            {
+                ErrorsCollecter.Add("SYNTAX", "Color requiere solo un parametro", Current.Line);
+            }
 
-            Match(SyntaxKind.CloseParenthesisToken, "Se esperaba ')' despues del color");
+            var literal = parameters.FirstOrDefault() as LiteralNode;
 
-            return new ColorNode(color);
+            var colorText = literal?.Value as string ?? "Transparent";
+
+            return new ColorNode(colorText, Current.Line);
         }
 
         InstructionNode ParseSize()
         {
-            NextToken();
+            Match(SyntaxKind.SizeKeyword, "Se esperaba 'Size' ");
 
-            Match(SyntaxKind.OpenParenthesisToken, "Se esperaba '(' tras Size");
+            var parameters = ParseParameters();
 
-            var value = ParseExpression();
+            if (parameters.Count != 1)
+                ErrorsCollecter.Add("SYNTAX", "Size solo requiere un parametro", Current.Line);
 
-            Match(SyntaxKind.CloseParenthesisToken, "Se esperaba ')' tras el valor ");
+            var sizeArg = parameters.ElementAtOrDefault(0) ?? new LiteralNode(1, Current.Line);
 
-            return new SizeNode(value);
+            return new SizeNode(sizeArg, Current.Line);
         }
-        // InstructionNode ParseGoTo()
-        // {
-        //     NextToken();
 
-        //     var label = Match(SyntaxKind.IdentifierToken, "Se esperana una etiqueta");
+        InstructionNode ParseDrawLine()
+        {
+            Match(SyntaxKind.DrawLineKeyword, "Se esperaba 'DrawLine'");
 
-        //     Match(SyntaxKind.OpenParenthesisToken, "Se esperba '(' tras la etiqueta");
+            var parameters = ParseParameters();
 
-        //     var condition = ParseExpression();
+            if (parameters.Count != 3)
+                ErrorsCollecter.Add("SYNTAX", "DrawLine requiere 3 parámetros", Current.Line);
 
-        //     Match(SyntaxKind.CloseParenthesisToken, "Se esperba ')' tras la condicion");
 
-        //     return new GoToNode(label, condition);
-        // }
+            var firstArg = parameters.ElementAtOrDefault(0) ?? new LiteralNode(0, Current.Line);
+            var secondArg = parameters.ElementAtOrDefault(1) ?? new LiteralNode(0, Current.Line);
+            var thirdArg = parameters.ElementAtOrDefault(2) ?? new LiteralNode(0, Current.Line);
 
-        // InstructionNode ParseFill()
-        // {
-        //     NextToken();
+            return new DrawLineNode(firstArg, secondArg, thirdArg, Current.Line);            
+        }
 
-        //     Match(SyntaxKind.OpenParenthesisToken, "Se esperaba un '(' tras Fill");
+        InstructionNode ParseDrawCircle()
+        {
+            Match(SyntaxKind.DrawCircleKeyword, "Se esperaba 'DrawCircle'");
 
-        //     Match(SyntaxKind.CloseParenthesisToken, "Se esperaba ')' ");
+            var parameters = ParseParameters();
 
-        //     return new FillNode();
-        // }
-    }
+            if (parameters.Count != 3)
+                ErrorsCollecter.Add("SYNTAX", "DrawCircle requiere 3 parámetros", Current.Line);
 
-    [Serializable]
-    internal class SyntaxException : Exception
-    {
-        public SyntaxException(){}
 
-        public SyntaxException(string? message) : base(message){}
+            var firstArg = parameters.ElementAtOrDefault(0) ?? new LiteralNode(0, Current.Line);
+            var secondArg = parameters.ElementAtOrDefault(1) ?? new LiteralNode(0, Current.Line);
+            var thirdArg = parameters.ElementAtOrDefault(2) ?? new LiteralNode(0, Current.Line);
 
-        public SyntaxException(string? message, Exception? innerException) : base(message, innerException){}
+            return new DrawCircleNode(firstArg, secondArg, thirdArg, Current.Line);
+        }
+
+        InstructionNode ParseDrawRectangle()
+        {
+            Match(SyntaxKind.DrawRectangleKeyword, "Se esperaba 'DrawRectangle'");
+
+            var parameters = ParseParameters();
+
+            if (parameters.Count != 5)
+                ErrorsCollecter.Add("SYNTAX", "DrawRectangle solo requiere 5 parámetros", Current.Line);
+
+            var x1 = parameters.ElementAtOrDefault(0) ?? new LiteralNode(0, Current.Line);
+            var y1 = parameters.ElementAtOrDefault(1) ?? new LiteralNode(0, Current.Line);
+            var x2 = parameters.ElementAtOrDefault(2) ?? new LiteralNode(0, Current.Line);
+            var y2 = parameters.ElementAtOrDefault(3) ?? new LiteralNode(0, Current.Line);
+            var w  = parameters.ElementAtOrDefault(4) ?? new LiteralNode(0, Current.Line);
+
+            return new DrawRectangleNode(x1, y1, x2, y2, w, Current.Line);
+        }
+
+        BinaryOperator MapToBinaryOperator(SyntaxKind syntaxKind)
+        {
+            return syntaxKind switch
+            {
+                SyntaxKind.PlusToken => BinaryOperator.Plus,
+                SyntaxKind.MinusToken => BinaryOperator.Minus,
+                SyntaxKind.MultToken => BinaryOperator.Mult,
+                SyntaxKind.SlashToken => BinaryOperator.Slash,
+                SyntaxKind.ModToken => BinaryOperator.Mod,
+                SyntaxKind.LessToken => BinaryOperator.LessThan,
+                SyntaxKind.LessOrEqualToken => BinaryOperator.LessThanOrEqual,
+                SyntaxKind.GreaterToken => BinaryOperator.GreaterThan,
+                SyntaxKind.GreaterOrEqualToken => BinaryOperator.GreaterThanOrEqual,
+                SyntaxKind.EqualToken => BinaryOperator.Equal,
+                SyntaxKind.AndAndToken => BinaryOperator.AndAnd,
+                SyntaxKind.OrOrToken => BinaryOperator.OrOr,
+                SyntaxKind.PowToken => BinaryOperator.Pow,
+                _ => throw new InvalidOperationException($"Operador binario inesperado: {syntaxKind}")
+            };
+        }
     }
 }

@@ -14,6 +14,8 @@ namespace Proyecto_Wall_E_Art
         {
             Line = line;
         }
+
+//        public abstract void SemanticCheck();
     }
 
     public abstract class InstructionNode : ASTNode
@@ -34,6 +36,14 @@ namespace Proyecto_Wall_E_Art
         {
             Instructions = instructions.ToList();
         }
+
+        // public override void SemanticCheck()
+        // {
+        //     foreach (var item in Instructions)
+        //     {
+        //         item.SemanticCheck();
+        //     }
+        // }
     }
 
     #region EXPRESSIONS
@@ -101,6 +111,15 @@ namespace Proyecto_Wall_E_Art
         }
     }
 
+    public class InvalidExpressionNode : ExpressionNode
+    {
+        public string Why { get; }
+        public InvalidExpressionNode(string why, int line) : base(line)
+        {
+            Why = why;
+        }
+    }
+
     #endregion
 
     #region INSTRUCTIONS
@@ -109,10 +128,10 @@ namespace Proyecto_Wall_E_Art
         public ExpressionNode XExpression { get; }
         public ExpressionNode YExpression { get; }
 
-        public SpawnNode(ExpressionNode XExpression, ExpressionNode YExpression, int line) : base(line)
+        public SpawnNode(ExpressionNode xExpression, ExpressionNode yExpression, int line) : base(line)
         {
-            XExpression = XExpression;
-            YExpression = YExpression;
+            XExpression = xExpression;
+            YExpression = yExpression;
         }
     }
 
@@ -245,6 +264,7 @@ namespace Proyecto_Wall_E_Art
             Plus,
             Minus,
             Mult,
+            Pow,
             Slash,
             Mod,
             LessThan,

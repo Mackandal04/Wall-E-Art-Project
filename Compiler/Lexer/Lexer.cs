@@ -79,14 +79,14 @@ namespace Proyecto_Wall_E_Art
             {
                 if (Current == '\n')
                 {
-                    Error.SetError("SYNTAX", $"Line {line}: String no puede tener saltos de linea");
+                    ErrorsCollecter.Add("LEXICAL", "String no puede tener saltos de linea", line);
                     return new SyntaxToken(SyntaxKind.ErrorToken, line, position, Text.Substring(start), null!);
                 }
             }
 
             if (Current == '\0')
             {
-                Error.SetError("SYNTAX", $"Line {line}: Unterminated string literal");
+                ErrorsCollecter.Add("lEXICAL", $"Comillas faltantes en el string", line);
                 return new SyntaxToken(SyntaxKind.ErrorToken, line, start, Text.Substring(start, position - start), null!);
             }
 
@@ -109,7 +109,7 @@ namespace Proyecto_Wall_E_Art
             var text = Text.Substring(start, position - start);
             if (!int.TryParse(text, out var value))
             {
-                Error.SetError("LEXICAL", $"Line {line}: Invalid number '{text}'");
+                ErrorsCollecter.Add("LEXICAL", $"Numero invalido {text}", line);
                 return new SyntaxToken(SyntaxKind.ErrorToken, line, start, text, null!);
             }
 
@@ -186,7 +186,7 @@ namespace Proyecto_Wall_E_Art
 
         private SyntaxToken ReportError(string op, int start)
         {
-            Error.SetError("LEXICAL", $"Line {line}: Token inválido '{op}'");
+            ErrorsCollecter.Add("LEXICAL", $"Token invalido{op}", line);
             return new SyntaxToken(SyntaxKind.ErrorToken, line, start, op, null!);
         }
 
@@ -211,7 +211,7 @@ namespace Proyecto_Wall_E_Art
 
             if (char.IsDigit(Current) || Current == '-')
             {
-                Error.SetError("LEXICAL", $"Line{line} : Identifier invalid :{Current}");
+                ErrorsCollecter.Add("LEXICAL", $"Identifier invalido{Current}", line);
                 Advance();
                 return new SyntaxToken(SyntaxKind.ErrorToken, line, start, Text.Substring(start, 1), null!);
             }
@@ -224,7 +224,7 @@ namespace Proyecto_Wall_E_Art
             int identLenght = position - start;
             string identText = Text.Substring(start, identLenght);
 
-            if (Current == '\n' || Current == '\0')
+            if (Current == '\n')
             {
                 return new SyntaxToken(SyntaxKind.LabelToken, line, start, identText, identText);
             }

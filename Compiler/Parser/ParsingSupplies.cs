@@ -40,30 +40,5 @@ namespace Proyecto_Wall_E_Art
         {
             return unaryOperatorPrecedence.TryGetValue(kind, out int value) ? value : 0 ;
         }
-
-        public static SyntaxKind GetKeywordKind(string text)
-        {
-            return text switch
-            {
-                "Spawn"          => SyntaxKind.SpawnKeyword,
-                "Color"          => SyntaxKind.ColorKeyword,
-                "Size"           => SyntaxKind.SizeKeyword,
-                "DrawLine"       => SyntaxKind.DrawLineKeyword,
-                "DrawCircle"     => SyntaxKind.DrawCircleKeyword,
-                "DrawRectangle"  => SyntaxKind.DrawRectangleKeyword,
-                "Fill"           => SyntaxKind.FillKeyword,
-                "GoTo"           => SyntaxKind.GoToKeyword,
-                // "GetActualX"     => SyntaxKind.GetActualXKeyword,
-                // "GetActualY"     => SyntaxKind.GetActualYKeyword,
-                // "GetCanvasSize"  => SyntaxKind.GetCanvasSizeKeyword,
-                // "GetColorCount"  => SyntaxKind.GetColorCountKeyword,
-                // "IsBrushColor"   => SyntaxKind.IsBrushColorKeyword,
-                // "IsBrushSize"    => SyntaxKind.IsBrushSizeKeyword,
-                // "IsCanvasColor"  => SyntaxKind.IsCanvasColorKeyword,
-                "true"           => SyntaxKind.TrueKeyword,
-                "false"          => SyntaxKind.FalseKeyword,
-                _                 => SyntaxKind.IdentifierToken
-            };
-        }
     }
 }

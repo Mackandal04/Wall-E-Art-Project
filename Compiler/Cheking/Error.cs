@@ -1,22 +1,26 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
-using Proyecto_Wall_E_Art;
 
 namespace Proyecto_Wall_E_Art
 {
-    public static class Error
+    public class Error
     {
-        public static bool wrong = false;
-        public static string message = "";
-        public static string typeMessage = "";
+        public string Type { get; set; }
+        public string Message { get; set; }
+        public int Line { get; set; }
 
-        public static void SetError(string type, string msg)
+        public Error(string type, string message, int line)
         {
-            if (wrong) return;
-            wrong = true;
-            message = msg;
-            typeMessage = type;
+            Type = type;
+            Message = message;
+            Line = line;
+        }
+
+        public override string ToString()
+        {
+            return $" [{Type}] Linea {Line} : {Message}";
         }
     }
 }
