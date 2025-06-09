@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
-using Proyecto_Wall_E_Art.Compiler.Semantic;
+using Proyecto_Wall_E_Art;
 
 namespace Proyecto_Wall_E_Art
 {
@@ -48,6 +48,11 @@ namespace Proyecto_Wall_E_Art
 
         public void Validate(SemanticContext context)
         {
+            var spawnCount = Instructions.Count(inst => inst is SpawnNode);
+
+            if (spawnCount > 1)
+                context.GetErrors($"Solo debe haber un comando Spawn, se encontraron '{spawnCount}'", Line);
+
             foreach (var item in Instructions)
             {
                 if (item is AssignmentNode assignmentNode)
@@ -319,6 +324,13 @@ namespace Proyecto_Wall_E_Art
                 ("Coordenada X", DirXExpression),
                 ("Coordenada Y", DirYExpression),
                 ("Distancia", DistanceExpression));
+
+            if (DirXExpression is LiteralNode litX && litX.Value is int corX && (corX > 1 || corX < -1))
+                context.GetErrors($"En DrawLine, el primer parametro debe ser 0, 1 o -1 ", Line);
+
+            if (DirXExpression is LiteralNode litY && litY.Value is int corY && (corY > 1 || corY < -1))
+                context.GetErrors($"En DrawLine, el segundo parametro debe ser 0, 1 o -1 ", Line);
+
         }
     }
 
