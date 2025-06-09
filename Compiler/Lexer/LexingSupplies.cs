@@ -27,6 +27,10 @@ namespace Proyecto_Wall_E_Art
             ["IsBrushColor"] = SyntaxKind.IsBrushColorKeyword,
             ["IsBrushSize"] = SyntaxKind.IsBrushSizeKeyword,
             ["IsCanvasColor"] = SyntaxKind.IsCanvasColorKeyword,
+
+            //Bools
+            ["true"] = SyntaxKind.TrueKeyword,
+            ["false"] = SyntaxKind.FalseKeyword
         };
 
         public static SyntaxKind GetKeywordKind(string text)

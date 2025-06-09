@@ -8,7 +8,9 @@ namespace Proyecto_Wall_E_Art
 {
     public sealed class Parser
     {
+        public IReadOnlyDictionary<string, int> labelsOfParse => labelsTable;
         List<SyntaxToken> Tokens;
+        Dictionary<string, int> labelsTable = new Dictionary<string, int>();
         int Position;
         SyntaxToken Current => LookAhead(0);//acutal token
         bool IsAtEnd => Current.Kind == SyntaxKind.EndOfFileToken;
@@ -43,7 +45,7 @@ namespace Proyecto_Wall_E_Art
             if (Current.Kind == kind)
                 return NextToken();
 
-            ErrorsCollecter.Add("SYNTAX", errorMsg + $" Encontrado {Current.Text}", Current.Line);
+            ErrorsCollecter.Add("SYNTAX", errorMsg , Current.Line);
 
             //Para evitar toda una linea innecesaria de errores
             var wrong = Current;
@@ -62,18 +64,34 @@ namespace Proyecto_Wall_E_Art
 
             var instructions = new List<InstructionNode>();
 
+            while (Current.Kind == SyntaxKind.WhitespaceToken)
+                NextToken();
+                
             if (Current.Kind != SyntaxKind.SpawnKeyword)
             {
                 ErrorsCollecter.Add("SYNTAX", "El programa debe comenzar con Spawn", Current.Line);
+
+                while (!IsAtEnd && Current.Kind != SyntaxKind.NewLineToken)
+                    NextToken();
             }
-            instructions.Add(ParseSpawn());
+
+            else
+                instructions.Add(ParseSpawn());
 
             //Parsea hasta el final
             while (!IsAtEnd)
             {
-                instructions.Add(ParseInstruction());
-            }
+                if (Current.Kind == SyntaxKind.NewLineToken)
+                {
+                    NextToken();
+                    continue;
+                }
 
+                var instr = ParseInstruction();
+
+                if (instr != null)
+                    instructions.Add(instr);
+            }
             return new ProgramNode(instructions, Current.Line);
         }
 
@@ -81,29 +99,40 @@ namespace Proyecto_Wall_E_Art
         {
             //Escoge el parseo segun el token
 
-            switch (Current.Kind)
+            if (Current.Kind == SyntaxKind.IdentifierToken && LookAhead(1).Kind == SyntaxKind.NewLineToken)
             {
-                case SyntaxKind.SpawnKeyword: return ParseSpawn();
-                case SyntaxKind.ColorKeyword: return ParseColor();
-                case SyntaxKind.SizeKeyword: return ParseSize();
-                case SyntaxKind.DrawLineKeyword: return ParseDrawLine();
-                case SyntaxKind.DrawCircleKeyword: return ParseDrawCircle();
-                case SyntaxKind.DrawRectangleKeyword: return ParseDrawRectangle();
-                case SyntaxKind.FillKeyword: return ParseFill();
-                case SyntaxKind.IdentifierToken when LookAhead(1).Kind == SyntaxKind.AssignmentToken: return ParseAssignment();
-                case SyntaxKind.LabelToken: return ParseLabel();
-                case SyntaxKind.GoToKeyword: return ParseGoTo();
+                var labelToken = NextToken();
 
+                NextToken();//se traga newLine
+                
+                labelsTable.Add(labelToken.Text, labelToken.Line);
 
-                //si no coincide con una instruccion valida registra el error
-                default:
-                    ErrorsCollecter.Add("SYNTAX", $"Instruccion desconocida: {Current.Text}", Current.Line);
-
-                    while (!IsAtEnd && Current.Kind != SyntaxKind.NewLineToken)
-                        NextToken();
-
-                    return null!;
+                return new LabelNode(labelToken.Text, labelToken.Line);
             }
+
+            switch (Current.Kind)
+                {
+                    case SyntaxKind.SpawnKeyword: return ParseSpawn();
+                    case SyntaxKind.ColorKeyword: return ParseColor();
+                    case SyntaxKind.SizeKeyword: return ParseSize();
+                    case SyntaxKind.DrawLineKeyword: return ParseDrawLine();
+                    case SyntaxKind.DrawCircleKeyword: return ParseDrawCircle();
+                    case SyntaxKind.DrawRectangleKeyword: return ParseDrawRectangle();
+                    case SyntaxKind.FillKeyword: return ParseFill();
+                    case SyntaxKind.IdentifierToken when LookAhead(1).Kind == SyntaxKind.AssignmentToken: return ParseAssignment();
+                    //case SyntaxKind.LabelToken: return ParseLabel();
+                    case SyntaxKind.GoToKeyword: return ParseGoTo();
+
+
+                    //si no coincide con una instruccion valida registra el error
+                    default:
+                        ErrorsCollecter.Add("SYNTAX", $"Instruccion desconocida: {Current.Text}", Current.Line);
+
+                        while (!IsAtEnd && Current.Kind != SyntaxKind.NewLineToken)
+                            NextToken();
+
+                        return null!;
+                }
         }
 
 
@@ -130,19 +159,24 @@ namespace Proyecto_Wall_E_Art
             return args;
         }
 
-        private InstructionNode ParseLabel()
-        {
-            var labelToken = Match(SyntaxKind.LabelToken, "Se esperaba un label");
+        // private InstructionNode ParseLabel()
+        // {
+        //     var labelToken = Match(SyntaxKind.LabelToken, "Se esperaba un label");
 
-            return new LabelNode(labelToken.Text, labelToken.Line);
-        }
+        //     return new LabelNode(labelToken.Text, labelToken.Line);
+        // }
         private InstructionNode ParseGoTo()
         {
             Match(SyntaxKind.GoToKeyword, "Se esperaba 'GoTo'");
 
             Match(SyntaxKind.OpenBracketToken, "Se esperaba '['");
+        
+            var labelToken = Match(SyntaxKind.IdentifierToken, "Se esperaba un identifier dentro de GoTo");
 
-            var labelToken = Match(SyntaxKind.LabelToken, "Se esperaba un label dentro de GoTo");
+            if (!labelsTable.ContainsKey(labelToken.Text))
+            {
+                ErrorsCollecter.Add("SEMANTIC", $"La etiqueta {labelToken.Text} no existe en el contexto actual", Current.Line);
+            }
 
             Match(SyntaxKind.CloseBracketToken, "Se esperaba ']'");
 

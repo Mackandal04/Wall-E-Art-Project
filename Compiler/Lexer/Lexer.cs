@@ -8,7 +8,8 @@ namespace Proyecto_Wall_E_Art
 {
     internal sealed class Lexer
     {
-        readonly string Text;
+        readonly string
+        Text;
         int position = 0;
         int line = 1;
         char Current => Peek(0);
@@ -24,6 +25,12 @@ namespace Proyecto_Wall_E_Art
         {
             if (position >= Text.Length)
                 return new SyntaxToken(SyntaxKind.EndOfFileToken, line, position, string.Empty, null!);
+
+            while (char.IsWhiteSpace(Current) && Current != '\n')
+                Advance();
+
+            if (Current == '\n')
+                return LexNewLine();
 
             if (Current == '<' && NextChar == '-')
                 return LexAssignment();
@@ -41,11 +48,8 @@ namespace Proyecto_Wall_E_Art
                 return tok;
             }
 
-            if (char.IsWhiteSpace(Current))
-                return LexWhitespace();
-
             if (char.IsDigit(Current))
-                return LexNumber();
+                    return LexNumber();
 
             if (char.IsLetter(Current))
                 return LexIdentifierOrLabel();
@@ -54,6 +58,14 @@ namespace Proyecto_Wall_E_Art
             var errorToken = new SyntaxToken(SyntaxKind.ErrorToken, line, position, text, null!);
             Advance();
             return errorToken;
+        }
+
+        SyntaxToken LexNewLine()
+        {
+            var start = position;
+            Advance();
+            line++;
+            return new SyntaxToken(SyntaxKind.NewLineToken, line, start, "\n", null!);
         }
 
         #region Main
@@ -68,33 +80,46 @@ namespace Proyecto_Wall_E_Art
         {
             position += count;
         }
+        
 
-        SyntaxToken LexString() //Lexeando cada token
+        SyntaxToken LexString()
         {
-            var start = position;
-            Advance();
+            int start = position;
+
+            Advance(); // Consume la comilla inicial
+
             bool escaped = false;
 
             while (Current != '\0' && (Current != '"' || escaped))
             {
                 if (Current == '\n')
                 {
-                    ErrorsCollecter.Add("LEXICAL", "String no puede tener saltos de linea", line);
-                    return new SyntaxToken(SyntaxKind.ErrorToken, line, position, Text.Substring(start), null!);
+                    ErrorsCollecter.Add("LEXICAL", "String no puede tener saltos de línea", line);
+                    return new SyntaxToken(SyntaxKind.ErrorToken, line, start, Text.Substring(start, position - start), null!);
                 }
+
+                // Si vemos una barra invertida y no estamos escapados, marcamos 'escaped = true'
+                if (Current == '\\' && !escaped)
+                    escaped = true;
+
+                else
+                    escaped = false;// Cualquier otro carácter quita el estado escapado
+
+                Advance();
             }
 
             if (Current == '\0')
             {
-                ErrorsCollecter.Add("lEXICAL", $"Comillas faltantes en el string", line);
+                ErrorsCollecter.Add("LEXICAL", "Comillas faltantes en el string", line);
                 return new SyntaxToken(SyntaxKind.ErrorToken, line, start, Text.Substring(start, position - start), null!);
             }
 
-            Advance();
-            var raw = Text.Substring(start, position - start); //raw almacena el texto original
+            Advance(); // Consumimos la comilla final
 
-            var value = raw.Substring(1, raw.Length - 2); //elimina las comillas del principio y fin
+            string raw = Text.Substring(start, position - start);
 
+            // Ahora extraemos el valor interior (sin comillas) y procesamos escapados
+            string value = raw.Substring(1, raw.Length - 2);
             string processed = value.Replace("\\\"", "\"").Replace("\\\\", "\\");
 
             return new SyntaxToken(SyntaxKind.StringToken, line, start, raw, processed);
@@ -184,7 +209,7 @@ namespace Proyecto_Wall_E_Art
             return kind == SyntaxKind.ErrorToken ? ReportError(op, start) : new SyntaxToken(kind, line, start, op, null!);
         }
 
-        private SyntaxToken ReportError(string op, int start)
+        SyntaxToken ReportError(string op, int start)
         {
             ErrorsCollecter.Add("LEXICAL", $"Token invalido{op}", line);
             return new SyntaxToken(SyntaxKind.ErrorToken, line, start, op, null!);
@@ -211,7 +236,7 @@ namespace Proyecto_Wall_E_Art
 
             if (char.IsDigit(Current) || Current == '-')
             {
-                ErrorsCollecter.Add("LEXICAL", $"Identifier invalido{Current}", line);
+                ErrorsCollecter.Add("LEXICAL", $"ID no debe comenzar con numero o guion{Current}", line);
                 Advance();
                 return new SyntaxToken(SyntaxKind.ErrorToken, line, start, Text.Substring(start, 1), null!);
             }
@@ -224,16 +249,16 @@ namespace Proyecto_Wall_E_Art
             int identLenght = position - start;
             string identText = Text.Substring(start, identLenght);
 
-            if (Current == '\n')
-            {
-                return new SyntaxToken(SyntaxKind.LabelToken, line, start, identText, identText);
-            }
+            // if (Current == '\n')
+            // {
+            //     return new SyntaxToken(SyntaxKind.LabelToken, line, start, identText, identText);
+            // }
 
             SyntaxKind kind = LexingSupplies.GetKeywordKind(identText);
 
             return new SyntaxToken(kind, line, start, identText, null!);
         }
-        
+
         public IEnumerable<SyntaxToken> LexAll()
         {
             SyntaxToken token;
@@ -243,9 +268,7 @@ namespace Proyecto_Wall_E_Art
                 token = Lex();
 
                 if (token.Kind == SyntaxKind.ErrorToken)
-                {
-                    throw new Exception($"Token invalido -{token.Text}");
-                }
+                    ErrorsCollecter.Add("LEXICAL", $"Token no valido : '{token.Text}'", token.Line);
 
                 yield return token;
 

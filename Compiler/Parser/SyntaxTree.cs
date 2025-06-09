@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
+using Proyecto_Wall_E_Art.Compiler.Semantic;
 
 namespace Proyecto_Wall_E_Art
 {
@@ -14,21 +15,29 @@ namespace Proyecto_Wall_E_Art
         {
             Line = line;
         }
-
-//        public abstract void SemanticCheck();
     }
 
-    public abstract class InstructionNode : ASTNode
+    public abstract class InstructionNode : ASTNode, ISemanticNode
     {
         protected InstructionNode(int line) : base(line) { }
+
+        public abstract void Validate(SemanticContext context);
     }
 
-    public abstract class ExpressionNode : ASTNode
+    public abstract class ExpressionNode : ASTNode, ISemanticNode
     {
         protected ExpressionNode(int line) : base(line) { }
+
+        //devuelve el tipo resultante y reporta errores
+        public abstract string CheckType(SemanticContext semanticContext);
+
+        public void Validate(SemanticContext context)
+        {
+            CheckType(context);
+        }
     }
 
-    public class ProgramNode : ASTNode
+    public class ProgramNode : ASTNode, ISemanticNode
     {
         public List<InstructionNode> Instructions { get; }
 
@@ -37,13 +46,19 @@ namespace Proyecto_Wall_E_Art
             Instructions = instructions.ToList();
         }
 
-        // public override void SemanticCheck()
-        // {
-        //     foreach (var item in Instructions)
-        //     {
-        //         item.SemanticCheck();
-        //     }
-        // }
+        public void Validate(SemanticContext context)
+        {
+            foreach (var item in Instructions)
+            {
+                if (item is AssignmentNode assignmentNode)
+                    context.VariablesTable.TryAdd(assignmentNode.Identifier, "desconocido");
+            }
+
+            foreach (var item in Instructions)
+            {
+                item.Validate(context);
+            }
+        }
     }
 
     #region EXPRESSIONS
@@ -60,6 +75,56 @@ namespace Proyecto_Wall_E_Art
             Operator = op;
             RightExpressionNode = rightExpressionNode;
         }
+
+        public override string CheckType(SemanticContext semanticContext)
+        {
+            string leftType = LeftExpressionNode.CheckType(semanticContext);
+            string rightType = RightExpressionNode.CheckType(semanticContext);
+
+            bool Both(string type) => leftType == type && rightType == type;
+
+            switch (Operator)
+            {
+                case BinaryOperator.Plus:
+                case BinaryOperator.Minus:
+                case BinaryOperator.Mult:
+                case BinaryOperator.Slash:
+                case BinaryOperator.Mod:
+                case BinaryOperator.Pow:
+                    if (!Both("int"))
+                        return Error($"Operador '{Operator}' requiere enteros", semanticContext);
+                    return "int";
+
+                case BinaryOperator.Equal:
+                    if (leftType != rightType)
+                        return Error($"'==' requiere tipos iguales, pero recibió {leftType} y {rightType}", semanticContext);
+                    return "bool";
+
+                case BinaryOperator.LessThan:
+                case BinaryOperator.LessThanOrEqual:
+                case BinaryOperator.GreaterThan:
+                case BinaryOperator.GreaterThanOrEqual:
+                    if (!Both("int"))
+                        return Error($"Operador '{Operator}' requiere enteros", semanticContext);
+                    return "bool";
+
+                case BinaryOperator.AndAnd:
+                case BinaryOperator.OrOr:
+                    if (!Both("bool"))
+                        return Error($"Operador lógico '{Operator}' requiere booleanos", semanticContext);
+                    return "bool";
+
+                default:
+                    return Error($"Operador binario no soportado: {Operator}", semanticContext);
+            }
+        }
+
+        private string Error(string message, SemanticContext semanticContext)
+        {
+            semanticContext.GetErrors(message, Line);
+            return "<desconocido>";
+        }
+    
     }
 
     public class UnaryExpressionNode : ExpressionNode
@@ -73,6 +138,24 @@ namespace Proyecto_Wall_E_Art
             Operator = op;
             MiddleExpression = middleExpression;
         }
+
+        public override string CheckType(SemanticContext semanticContext)
+        {
+            string type = MiddleExpression.CheckType(semanticContext);
+
+            return Operator switch
+            {
+                UnaryOperator.Minus => type == "int" ? "int" : Error("Operador '-' requiere tipo int ", semanticContext),
+                UnaryOperator.Not => type == "bool" ? "bool" : Error("Operador '!' requiere tipo bool ", semanticContext),
+                _ => Error("Operador unario desconocido", semanticContext)
+            };
+        }
+
+        string Error(string message, SemanticContext semanticContext)
+        {
+            semanticContext.GetErrors(message, Line);
+            return "desconocido";
+        }
     }
 
     public class LiteralNode : ExpressionNode
@@ -85,6 +168,15 @@ namespace Proyecto_Wall_E_Art
         {
             Value = value;
         }
+
+        public override string CheckType(SemanticContext semanticContext)
+        => Value switch
+        {
+            int => "int",
+            bool => "bool",
+            string => "string",
+            _ => "desconocido"
+        };
     }
 
     public class VariableNode : ExpressionNode
@@ -96,6 +188,17 @@ namespace Proyecto_Wall_E_Art
             if (string.IsNullOrWhiteSpace(name))
                 throw new ArgumentException("Variable name cannot be null or whitespace.", nameof(name));
             Name = name;
+        }
+
+        public override string CheckType(SemanticContext semanticContext)
+        {
+            if (!semanticContext.VariablesTable.TryGetValue(Name, out var type))
+            {
+                semanticContext.GetErrors($"Variable {Name} no declarada", Line);
+                return "unknown";
+            }
+
+            return type;
         }
     }
 
@@ -109,6 +212,20 @@ namespace Proyecto_Wall_E_Art
             FunctionKind = functionKind;
             Arguments = param.ToList();
         }
+
+        public override string CheckType(SemanticContext semanticContext)
+        {
+            // Ejemplo para GetActualX() que no recibe nada y devuelve int
+            if (FunctionKind == FunctionKind.GetActualX)
+            {
+                if (Arguments.Count != 0)
+                    semanticContext.GetErrors($"'{FunctionKind}' no recibe argumentos", Line);
+                return "int";
+            }
+
+            // Otras funciones...
+            return "<desconocido>";
+        }
     }
 
     public class InvalidExpressionNode : ExpressionNode
@@ -117,6 +234,12 @@ namespace Proyecto_Wall_E_Art
         public InvalidExpressionNode(string why, int line) : base(line)
         {
             Why = why;
+        }
+
+        public override string CheckType(SemanticContext semanticContext)
+        {
+            semanticContext.GetErrors($"Expresión inválida: {Why}", Line);
+            return "desconocido";
         }
     }
 
@@ -133,6 +256,13 @@ namespace Proyecto_Wall_E_Art
             XExpression = xExpression;
             YExpression = yExpression;
         }
+
+        public override void Validate(SemanticContext context)
+        {
+            SemanticHelp.CheckParams(context, "Spawn", "int",
+                ("X", XExpression),
+                ("Y", YExpression));
+        }
     }
 
     public class ColorNode : InstructionNode
@@ -146,6 +276,13 @@ namespace Proyecto_Wall_E_Art
 
             Color = color;
         }
+
+        public override void Validate(SemanticContext context)
+        {
+            //y puede venir de una varibale?
+            if (!context.ColorsTable.Contains(Color))
+                context.GetErrors($"Color '{Color}' no declarado", Line);
+        }
     }
 
     public class SizeNode : InstructionNode
@@ -154,6 +291,12 @@ namespace Proyecto_Wall_E_Art
         public SizeNode(ExpressionNode sizeExpression, int line) : base(line)
         {
             SizeExpression = sizeExpression;
+        }
+
+        public override void Validate(SemanticContext context)
+        {
+            SemanticHelp.CheckParams(context, "Size", "int",
+                ("size", SizeExpression));
         }
     }
 
@@ -169,6 +312,14 @@ namespace Proyecto_Wall_E_Art
             DirYExpression = dirYExpression;
             DistanceExpression = distanceExpression;
         }
+
+        public override void Validate(SemanticContext context)
+        {
+            SemanticHelp.CheckParams(context, "DrawLine", "int",
+                ("Coordenada X", DirXExpression),
+                ("Coordenada Y", DirYExpression),
+                ("Distancia", DistanceExpression));
+        }
     }
 
     public class DrawCircleNode : InstructionNode
@@ -182,6 +333,14 @@ namespace Proyecto_Wall_E_Art
             DirXExpression = dirXExpression;
             DirYExpression = dirYExpression;
             RadiusExpression = radiusExpression;
+        }
+
+        public override void Validate(SemanticContext context)
+        {
+            SemanticHelp.CheckParams(context, "DrawCircle", "int",
+                ("Coordenada X", DirXExpression),
+                ("Coordenada Y", DirYExpression),
+                ("Radio", RadiusExpression));
         }
     }
 
@@ -201,11 +360,23 @@ namespace Proyecto_Wall_E_Art
             WidthExpression = widthExpression;
             HeightExpression = heightExpression;
         }
+
+        public override void Validate(SemanticContext context)
+        {
+            SemanticHelp.CheckParams(context, "DrawRectangle", "int",
+                ("Coordenada X", DirXExpression),
+                ("Coordenada Y", DirYExpression),
+                ("Distancia", DistanceExpression),
+                ("Ancho", WidthExpression),
+                ("Alto", HeightExpression));
+        }
     }
 
     public class FillNode : InstructionNode
     {
         public FillNode(int line) : base(line) { }
+
+        public override void Validate(SemanticContext context){}
     }
 
     #endregion
@@ -226,19 +397,32 @@ namespace Proyecto_Wall_E_Art
             Identifier = identifier;
             Expression = expression;
         }
+
+        public override void Validate(SemanticContext context)
+        {
+            string expressionType = Expression.CheckType(context);
+
+            if (context.VariablesTable.TryGetValue(Identifier, out var variableType) && variableType != "desconocido" && variableType != expressionType)
+                context.GetErrors($"Variable {Identifier} ya es de tipo {variableType}, no se puede asignar '{expressionType}' ", Line);
+
+            else
+                context.VariablesTable[Identifier] = expressionType;
+        }
     }
 
     public class LabelNode : InstructionNode
     {
-        public string Label { get; }
+        public string LabelName { get; }
 
         public LabelNode(string label, int line) : base(line)
         {
             if (string.IsNullOrEmpty(label))
                 throw new ArgumentException("Label invalido");
 
-            Label = label;
+            LabelName = label;
         }
+
+        public override void Validate(SemanticContext context){}
     }
 
     public class GoToNode : InstructionNode
@@ -256,6 +440,19 @@ namespace Proyecto_Wall_E_Art
 
             Label = label;
             Condition = condition;
+        }
+
+        public override void Validate(SemanticContext context)
+        {
+            if (!context.LabelsTable.ContainsKey(Label))
+            {
+                context.GetErrors($"Label {Label} no declarado", Line);
+            }
+
+            string conditionType = Condition.CheckType(context);
+
+            if (conditionType != "bool")
+                context.GetErrors($"Condicion de tipo {conditionType}, se esperaba 'bool'", Line);
         }
     }
 

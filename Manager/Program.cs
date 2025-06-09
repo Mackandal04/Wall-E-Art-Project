@@ -20,7 +20,20 @@ class CompilerRunner
             var lexer = new Lexer(source);
             var tokens = lexer.LexAll().ToList();
 
+            if (ErrorsCollecter.HasErrors())
+            {
+                System.Console.WriteLine("ERRORES LEXICOS DETECTADOS");
+                foreach (var item in ErrorsCollecter.GetErrors())
+                {
+                    System.Console.WriteLine($"[Linea {item.Line}] {item.Message}");
+                }
+
+                return;
+            }
+
+
             Console.WriteLine("\n--- TOKENS ---");
+
             foreach (var token in tokens)
                 Console.WriteLine($"{token.Kind}  \"{token.Text}\"  (línea {token.Line})");
 
@@ -28,10 +41,35 @@ class CompilerRunner
             System.Console.WriteLine();
             System.Console.WriteLine("PARSER");
             var parser = new Parser(tokens);
-            System.Console.WriteLine($"Primer Token: {tokens.First().Kind} - \"{tokens.First().Text}\"");
+//            System.Console.WriteLine($"Primer Token: {tokens.First().Kind} - \"{tokens.First().Text}\"");
             var program = parser.ParseProgram();
 
-            // 3. ERRORES
+            //3. SEMANTIC
+            System.Console.WriteLine();
+
+            var context = new SemanticContext();
+
+            foreach (var label in parser.labelsOfParse)
+            {
+                if (context.LabelsTable.ContainsKey(label.Key))
+                    context.GetErrors($"Label {label.Key} duplicado", label.Value);
+
+                else
+                    context.LabelsTable.Add(label.Key, label.Value);
+            }
+            program.Validate(context);
+
+            if (context.Errors.Count > 0)
+            {
+                System.Console.WriteLine("ERRORES SEMÁNTICOS");
+
+                foreach (var error in context.Errors)
+                    Console.WriteLine($"[Línea {error.Line}] {error.Message}");
+
+                return;
+            }
+
+            // 4. ERRORES
             System.Console.WriteLine();
             System.Console.WriteLine("ERRORS");
             if (ErrorsCollecter.HasErrors())
@@ -42,8 +80,11 @@ class CompilerRunner
             }
             else
             {
-                Console.WriteLine("\n--- AST GENERADO ---");
-                ImprimirAST(program);
+                // Console.WriteLine("\n--- AST GENERADO ---");
+                // ImprimirAST(program);
+                System.Console.WriteLine();
+                System.Console.WriteLine(" :) AST :");
+                ASTPrinter.Print(program);
             }
 
             Console.WriteLine("\nPresiona una tecla para volver a escribir código...");
@@ -55,7 +96,7 @@ class CompilerRunner
     {
         string line;
         var lines = new List<string>();
-        while (!string.IsNullOrWhiteSpace(line = Console.ReadLine()))
+        while (!string.IsNullOrWhiteSpace(line = Console.ReadLine()!))
             lines.Add(line);
         return string.Join("\n", lines);
     }
@@ -94,7 +135,7 @@ class CompilerRunner
                     Console.WriteLine($"{indent}GoTo[{g.Label}]({FormatearExpr(g.Condition)})");
                     break;
                 case LabelNode l:
-                    Console.WriteLine($"{indent}{l.Label}:");
+                    Console.WriteLine($"{indent}{l.LabelName}:");
                     break;
                 default:
                     Console.WriteLine($"{indent}{instr.GetType().Name} (no soportado para impresión)");
