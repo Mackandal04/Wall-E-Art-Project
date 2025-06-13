@@ -129,7 +129,7 @@ namespace Proyecto_Wall_E_Art
             semanticContext.GetErrors(message, Line);
             return "<desconocido>";
         }
-    
+
     }
 
     public class UnaryExpressionNode : ExpressionNode
@@ -220,16 +220,32 @@ namespace Proyecto_Wall_E_Art
 
         public override string CheckType(SemanticContext semanticContext)
         {
-            // Ejemplo para GetActualX() que no recibe nada y devuelve int
-            if (FunctionKind == FunctionKind.GetActualX)
+            if
+            (
+                FunctionKind == FunctionKind.GetActualX ||
+                FunctionKind == FunctionKind.GetActualY ||
+                FunctionKind == FunctionKind.GetCanvasSize
+            )
+
             {
                 if (Arguments.Count != 0)
                     semanticContext.GetErrors($"'{FunctionKind}' no recibe argumentos", Line);
                 return "int";
             }
 
-            // Otras funciones...
-            return "<desconocido>";
+            else if (FunctionKind == FunctionKind.GetColorCount)
+                throw new NotImplementedException();
+
+            else if (FunctionKind == FunctionKind.IsBrushColor)
+                throw new NotImplementedException();
+
+            else if (FunctionKind == FunctionKind.IsBrushSize)
+                throw new NotImplementedException();
+
+            else if (FunctionKind == FunctionKind.IsCanvasColor)
+                throw new NotImplementedException();
+
+            return "desconocido";
         }
     }
 
@@ -388,7 +404,7 @@ namespace Proyecto_Wall_E_Art
     {
         public FillNode(int line) : base(line) { }
 
-        public override void Validate(SemanticContext context){}
+        public override void Validate(SemanticContext context) { }
     }
 
     #endregion
@@ -434,7 +450,7 @@ namespace Proyecto_Wall_E_Art
             LabelName = label;
         }
 
-        public override void Validate(SemanticContext context){}
+        public override void Validate(SemanticContext context) { }
     }
 
     public class GoToNode : InstructionNode
@@ -469,38 +485,38 @@ namespace Proyecto_Wall_E_Art
     }
 
     public enum BinaryOperator
-        {
-            Plus,
-            Minus,
-            Mult,
-            Pow,
-            Slash,
-            Mod,
-            LessThan,
-            GreaterThan,
-            LessThanOrEqual,
-            GreaterThanOrEqual,
-            Equal,
-            NotEqual,
-            AndAnd,
-            OrOr
-        }
+    {
+        Plus,
+        Minus,
+        Mult,
+        Pow,
+        Slash,
+        Mod,
+        LessThan,
+        GreaterThan,
+        LessThanOrEqual,
+        GreaterThanOrEqual,
+        Equal,
+        NotEqual,
+        AndAnd,
+        OrOr
+    }
 
-        public enum UnaryOperator
-        {
-            Minus,
-            Not
-        }
+    public enum UnaryOperator
+    {
+        Minus,
+        Not
+    }
 
-        public enum FunctionKind
-        {
-            GetActualX,
-            GetActualY,
-            GetCanvasSize,
-            GetColorCount,
-            IsBrushColor,
-            IsBrushSize,
-            IsCanvasColor
-        }
+    public enum FunctionKind
+    {
+        GetActualX,
+        GetActualY,
+        GetCanvasSize,
+        GetColorCount,
+        IsBrushColor,
+        IsBrushSize,
+        IsCanvasColor
+    }
         #endregion
 }
