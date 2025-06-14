@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "e+lIDzsLVOE=",
+  "success": true,
+  "projectFilePath": "D:\\1. Primer Año\\Programación\\Proyectos\\Repitencia 1ro\\2ndProjectWall-E\\Wall-E Main\\PixelWallE.GUI\\PixelWallE.GUI.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\MAURICIO\\.nuget\\packages\\microsoft.win32.systemevents\\9.0.6\\microsoft.win32.systemevents.9.0.6.nupkg.sha512",
+    "C:\\Users\\MAURICIO\\.nuget\\packages\\system.drawing.common\\9.0.6\\system.drawing.common.9.0.6.nupkg.sha512"
+  ],
+  "logs": []
+}
