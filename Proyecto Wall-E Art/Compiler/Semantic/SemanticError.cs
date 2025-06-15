@@ -13,6 +13,7 @@ namespace Proyecto_Wall_E_Art
         public SemanticError(string message, int line)
         {
             Message = message;
+
             Line = line;
         }
 

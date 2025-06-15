@@ -133,7 +133,7 @@ partial class Form1
         this.picCanvas.Location = new System.Drawing.Point(0, 270);
         this.picCanvas.Name = "picCanvas";
         this.picCanvas.Size = new System.Drawing.Size(800, 430);
-        this.picCanvas.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+        this.picCanvas.SizeMode = PictureBoxSizeMode.AutoSize;
         this.picCanvas.TabIndex = 6;
         this.picCanvas.TabStop = false;
 

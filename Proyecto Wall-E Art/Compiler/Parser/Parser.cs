@@ -68,12 +68,8 @@ namespace Proyecto_Wall_E_Art
                 NextToken();
                 
             if (Current.Kind != SyntaxKind.SpawnKeyword)
-            {
                 ErrorsCollecter.Add("SYNTAX", "El programa debe comenzar con Spawn", Current.Line);
-
-                while (!IsAtEnd && Current.Kind != SyntaxKind.NewLineToken)
-                    NextToken();
-            }
+            
 
             else
                 instructions.Add(ParseSpawn());
@@ -94,7 +90,7 @@ namespace Proyecto_Wall_E_Art
             }
             return new ProgramNode(instructions, Current.Line);
         }
-
+        
         InstructionNode ParseInstruction()
         {
             //Escoge el parseo segun el token
@@ -120,7 +116,6 @@ namespace Proyecto_Wall_E_Art
                     case SyntaxKind.DrawRectangleKeyword: return ParseDrawRectangle();
                     case SyntaxKind.FillKeyword: return ParseFill();
                     case SyntaxKind.IdentifierToken when LookAhead(1).Kind == SyntaxKind.AssignmentToken: return ParseAssignment();
-                    //case SyntaxKind.LabelToken: return ParseLabel();
                     case SyntaxKind.GoToKeyword: return ParseGoTo();
 
 
@@ -158,25 +153,18 @@ namespace Proyecto_Wall_E_Art
 
             return args;
         }
-
-        // private InstructionNode ParseLabel()
-        // {
-        //     var labelToken = Match(SyntaxKind.LabelToken, "Se esperaba un label");
-
-        //     return new LabelNode(labelToken.Text, labelToken.Line);
-        // }
+        
         private InstructionNode ParseGoTo()
         {
             Match(SyntaxKind.GoToKeyword, "Se esperaba 'GoTo'");
 
             Match(SyntaxKind.OpenBracketToken, "Se esperaba '['");
-        
+
             var labelToken = Match(SyntaxKind.IdentifierToken, "Se esperaba un identifier dentro de GoTo");
 
             if (!labelsTable.ContainsKey(labelToken.Text))
-            {
                 ErrorsCollecter.Add("SEMANTIC", $"La etiqueta {labelToken.Text} no existe en el contexto actual", Current.Line);
-            }
+            
 
             Match(SyntaxKind.CloseBracketToken, "Se esperaba ']'");
 
@@ -211,31 +199,6 @@ namespace Proyecto_Wall_E_Art
         ExpressionNode ParseExpression(int parentPrecedence = 0)
         {
             return ParseBinaryExpression(parentPrecedence);
-
-
-            // ExpressionNode left;
-
-            // if (ParsingSupplies.GetUnaryOperatorPrecedence(Current.Kind) > 0)
-            // {
-            //     var op = NextToken();
-            //     var operand = ParseExpression(ParsingSupplies.GetUnaryOperatorPrecedence(op.Kind));
-            //     left = new UnaryExpressionNode(op, operand);
-            // }
-            // else
-            //     left = ParsePrimary();
-
-            // while (true)
-            // {
-            //     var precedence = ParsingSupplies.GetBinaryOperatorPrecedence(Current.Kind);
-            //     if (precedence == 0 || precedence <= parentPrecedence)
-            //         break;
-
-            //     var op = NextToken();
-            //     var right = ParseExpression(precedence);
-            //     left = new BinaryExpressionNode(left, op, right);
-            // }
-
-            // return left;
         }
 
         ExpressionNode ParseBinaryExpression(int parentPrecedence)
@@ -256,12 +219,14 @@ namespace Proyecto_Wall_E_Art
                 if (!EsOperadorBinarioValido(opToken.Kind))
                 {
                     ErrorsCollecter.Add("SYNTAX", $"Operador binario inesperado: '{opToken.Text}'", opToken.Line);
+
                     return new InvalidExpressionNode($"Operador inesperado: '{opToken.Text}'", opToken.Line);
                 }
 
                 var right = ParseBinaryExpression(precedence + 1);
 
                 var op = MapToBinaryOperator(opToken.Kind);
+
                 left = new BinaryExpressionNode(left, op, right, opToken.Line);
             }
 
@@ -292,17 +257,17 @@ namespace Proyecto_Wall_E_Art
             if (unaryPrec > 0)
             {
                 //solo manejamos '-' o '!'
-                var opKind = (Current.Kind == SyntaxKind.MinusToken)
-                ? UnaryOperator.Minus
-                : UnaryOperator.Not;
-
                 var opToken = Current;
+                var opKind = (Current.Kind == SyntaxKind.MinusToken)? UnaryOperator.Minus: UnaryOperator.Not;
+
                 NextToken();
 
                 var operand = ParseUnaryOrPrimary();
 
                 if (operand is InvalidExpressionNode)
                     return new InvalidExpressionNode("Error en operador unario", opToken.Line);
+
+                return new UnaryExpressionNode(opKind, operand, opToken.Line);
             }
 
             return ParsePrimary();
@@ -323,6 +288,7 @@ namespace Proyecto_Wall_E_Art
                     return new LiteralNode(value, Current.Line);
 
                 ErrorsCollecter.Add("SYNTAX", $"Número inválido '{text}'", Current.Line);
+
                 return new InvalidExpressionNode($"Número inválido '{text}'", Current.Line);
             }
 
@@ -335,7 +301,7 @@ namespace Proyecto_Wall_E_Art
 
                 NextToken();
 
-                var str = raw[1..^1];        // quitar las comillas
+                var str = raw[1..^1];// quitar las comillas
 
                 return new LiteralNode(str, Current.Line);
             }
@@ -353,7 +319,17 @@ namespace Proyecto_Wall_E_Art
             }
 
             // 4) Variable o llamada a función
-            if (Current.Kind == SyntaxKind.IdentifierToken)
+            if
+            (
+                Current.Kind == SyntaxKind.IdentifierToken
+                || Current.Kind == SyntaxKind.GetActualXKeyword
+                || Current.Kind == SyntaxKind.GetActualYKeyword
+                || Current.Kind == SyntaxKind.GetCanvasSizeKeyword
+                || Current.Kind == SyntaxKind.GetColorCountKeyword
+                || Current.Kind == SyntaxKind.IsBrushColorKeyword
+                || Current.Kind == SyntaxKind.IsBrushSizeKeyword
+                || Current.Kind == SyntaxKind.IsCanvasColorKeyword
+            )
             {
                 var name = Current.Text;
 
@@ -364,7 +340,7 @@ namespace Proyecto_Wall_E_Art
                 if (Current.Kind == SyntaxKind.OpenParenthesisToken)
                 {
                     var args = ParseParameters();  // lista de ExpressionNode
-                    
+
                     // Mapeo a FunctionKind
                     if (Enum.TryParse<FunctionKind>(name, out var kind))
                         return new BuiltInFunctionNode(kind, args, token.Line);
@@ -391,8 +367,11 @@ namespace Proyecto_Wall_E_Art
             }
 
             var wrong = Current;
+
             ErrorsCollecter.Add("SYNTAX", $"Se esperaba expresión primaria, encontró '{wrong.Text}'", wrong.Line);
+
             NextToken();
+
             return new InvalidExpressionNode($"Token inesperado '{wrong.Text}'", wrong.Line);
         }
 
@@ -430,16 +409,9 @@ namespace Proyecto_Wall_E_Art
 
             var parameters = ParseParameters();
 
-            if (parameters.Count != 1)
-            {
-                ErrorsCollecter.Add("SYNTAX", "Color requiere solo un parametro", Current.Line);
-            }
+            var expression = parameters.FirstOrDefault() ?? new LiteralNode("Transparent",Current.Line);
 
-            var literal = parameters.FirstOrDefault() as LiteralNode;
-
-            var colorText = literal?.Value as string ?? "Transparent";
-
-            return new ColorNode(colorText, Current.Line);
+            return new ColorNode(expression, expression.Line);
         }
 
         InstructionNode ParseSize()
@@ -465,9 +437,10 @@ namespace Proyecto_Wall_E_Art
             if (parameters.Count != 3)
                 ErrorsCollecter.Add("SYNTAX", "DrawLine requiere 3 parámetros", Current.Line);
 
-
             var firstArg = parameters.ElementAtOrDefault(0) ?? new LiteralNode(0, Current.Line);
+
             var secondArg = parameters.ElementAtOrDefault(1) ?? new LiteralNode(0, Current.Line);
+
             var thirdArg = parameters.ElementAtOrDefault(2) ?? new LiteralNode(0, Current.Line);
 
             return new DrawLineNode(firstArg, secondArg, thirdArg, Current.Line);            
@@ -482,9 +455,10 @@ namespace Proyecto_Wall_E_Art
             if (parameters.Count != 3)
                 ErrorsCollecter.Add("SYNTAX", "DrawCircle requiere 3 parámetros", Current.Line);
 
-
             var firstArg = parameters.ElementAtOrDefault(0) ?? new LiteralNode(0, Current.Line);
+
             var secondArg = parameters.ElementAtOrDefault(1) ?? new LiteralNode(0, Current.Line);
+
             var thirdArg = parameters.ElementAtOrDefault(2) ?? new LiteralNode(0, Current.Line);
 
             return new DrawCircleNode(firstArg, secondArg, thirdArg, Current.Line);
@@ -499,13 +473,17 @@ namespace Proyecto_Wall_E_Art
             if (parameters.Count != 5)
                 ErrorsCollecter.Add("SYNTAX", "DrawRectangle solo requiere 5 parámetros", Current.Line);
 
-            var x1 = parameters.ElementAtOrDefault(0) ?? new LiteralNode(0, Current.Line);
-            var y1 = parameters.ElementAtOrDefault(1) ?? new LiteralNode(0, Current.Line);
-            var x2 = parameters.ElementAtOrDefault(2) ?? new LiteralNode(0, Current.Line);
-            var y2 = parameters.ElementAtOrDefault(3) ?? new LiteralNode(0, Current.Line);
-            var w  = parameters.ElementAtOrDefault(4) ?? new LiteralNode(0, Current.Line);
+            var dirX = parameters[0];
 
-            return new DrawRectangleNode(x1, y1, x2, y2, w, Current.Line);
+            var dirY = parameters[1];
+
+            var distance = parameters[2];
+
+            var width = parameters[3];
+
+            var height  = parameters[4];
+
+            return new DrawRectangleNode(dirX, dirY, distance, width, height, Current.Line);
         }
 
         BinaryOperator MapToBinaryOperator(SyntaxKind syntaxKind)
@@ -513,18 +491,31 @@ namespace Proyecto_Wall_E_Art
             return syntaxKind switch
             {
                 SyntaxKind.PlusToken => BinaryOperator.Plus,
+
                 SyntaxKind.MinusToken => BinaryOperator.Minus,
+
                 SyntaxKind.MultToken => BinaryOperator.Mult,
+
                 SyntaxKind.SlashToken => BinaryOperator.Slash,
+
                 SyntaxKind.ModToken => BinaryOperator.Mod,
+
                 SyntaxKind.LessToken => BinaryOperator.LessThan,
+
                 SyntaxKind.LessOrEqualToken => BinaryOperator.LessThanOrEqual,
+
                 SyntaxKind.GreaterToken => BinaryOperator.GreaterThan,
+
                 SyntaxKind.GreaterOrEqualToken => BinaryOperator.GreaterThanOrEqual,
+
                 SyntaxKind.EqualToken => BinaryOperator.Equal,
+
                 SyntaxKind.AndAndToken => BinaryOperator.AndAnd,
+
                 SyntaxKind.OrOrToken => BinaryOperator.OrOr,
+
                 SyntaxKind.PowToken => BinaryOperator.Pow,
+
                 _ => throw new InvalidOperationException($"Operador binario inesperado: {syntaxKind}")
             };
         }

@@ -243,7 +243,7 @@ namespace Proyecto_Wall_E_Art
 
             Advance();
 
-            while (char.IsLetterOrDigit(Current) || Current == '_' || Current == '-')
+            while (char.IsLetterOrDigit(Current) || Current == '_' )
                 Advance();
 
             int identLenght = position - start;

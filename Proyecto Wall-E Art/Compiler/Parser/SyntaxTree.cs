@@ -50,8 +50,8 @@ namespace Proyecto_Wall_E_Art
         {
             var spawnCount = Instructions.Count(inst => inst is SpawnNode);
 
-            if (spawnCount > 1)
-                context.GetErrors($"Solo debe haber un comando Spawn, se encontraron '{spawnCount}'", Line);
+            // if (spawnCount > 1)
+            //     context.GetErrors($"Solo debe haber un comando Spawn, se encontraron '{spawnCount}'", Line);
 
             foreach (var item in Instructions)
             {
@@ -77,13 +77,16 @@ namespace Proyecto_Wall_E_Art
         public BinaryExpressionNode(ExpressionNode leftExpressionNode, BinaryOperator op, ExpressionNode rightExpressionNode, int line) : base(line)
         {
             LeftExpressionNode = leftExpressionNode;
+
             Operator = op;
+
             RightExpressionNode = rightExpressionNode;
         }
 
         public override string CheckType(SemanticContext semanticContext)
         {
             string leftType = LeftExpressionNode.CheckType(semanticContext);
+
             string rightType = RightExpressionNode.CheckType(semanticContext);
 
             bool Both(string type) => leftType == type && rightType == type;
@@ -91,10 +94,15 @@ namespace Proyecto_Wall_E_Art
             switch (Operator)
             {
                 case BinaryOperator.Plus:
+
                 case BinaryOperator.Minus:
+
                 case BinaryOperator.Mult:
+
                 case BinaryOperator.Slash:
+
                 case BinaryOperator.Mod:
+
                 case BinaryOperator.Pow:
                     if (!Both("int"))
                         return Error($"Operador '{Operator}' requiere enteros", semanticContext);
@@ -105,15 +113,20 @@ namespace Proyecto_Wall_E_Art
                         return Error($"'==' requiere tipos iguales, pero recibió {leftType} y {rightType}", semanticContext);
                     return "bool";
 
+                
                 case BinaryOperator.LessThan:
+
                 case BinaryOperator.LessThanOrEqual:
+
                 case BinaryOperator.GreaterThan:
+
                 case BinaryOperator.GreaterThanOrEqual:
                     if (!Both("int"))
                         return Error($"Operador '{Operator}' requiere enteros", semanticContext);
                     return "bool";
 
                 case BinaryOperator.AndAnd:
+
                 case BinaryOperator.OrOr:
                     if (!Both("bool"))
                         return Error($"Operador lógico '{Operator}' requiere booleanos", semanticContext);
@@ -127,7 +140,7 @@ namespace Proyecto_Wall_E_Art
         private string Error(string message, SemanticContext semanticContext)
         {
             semanticContext.GetErrors(message, Line);
-            return "<desconocido>";
+            return "desconocido";
         }
 
     }
@@ -159,6 +172,7 @@ namespace Proyecto_Wall_E_Art
         string Error(string message, SemanticContext semanticContext)
         {
             semanticContext.GetErrors(message, Line);
+
             return "desconocido";
         }
     }
@@ -174,8 +188,7 @@ namespace Proyecto_Wall_E_Art
             Value = value;
         }
 
-        public override string CheckType(SemanticContext semanticContext)
-        => Value switch
+        public override string CheckType(SemanticContext semanticContext) => Value switch
         {
             int => "int",
             bool => "bool",
@@ -192,6 +205,7 @@ namespace Proyecto_Wall_E_Art
         {
             if (string.IsNullOrWhiteSpace(name))
                 throw new ArgumentException("Variable name cannot be null or whitespace.", nameof(name));
+
             Name = name;
         }
 
@@ -200,7 +214,8 @@ namespace Proyecto_Wall_E_Art
             if (!semanticContext.VariablesTable.TryGetValue(Name, out var type))
             {
                 semanticContext.GetErrors($"Variable {Name} no declarada", Line);
-                return "unknown";
+
+                return "desconocido";
             }
 
             return type;
@@ -215,6 +230,7 @@ namespace Proyecto_Wall_E_Art
         public BuiltInFunctionNode(FunctionKind functionKind, IEnumerable<ExpressionNode> param, int line) : base(line)
         {
             FunctionKind = functionKind;
+
             Arguments = param.ToList();
         }
 
@@ -223,35 +239,100 @@ namespace Proyecto_Wall_E_Art
             if
             (
                 FunctionKind == FunctionKind.GetActualX ||
+
                 FunctionKind == FunctionKind.GetActualY ||
+
                 FunctionKind == FunctionKind.GetCanvasSize
             )
 
             {
                 if (Arguments.Count != 0)
                     semanticContext.GetErrors($"'{FunctionKind}' no recibe argumentos", Line);
+
                 return "int";
             }
 
-            else if (FunctionKind == FunctionKind.GetColorCount)
-                throw new NotImplementedException();
+            if (FunctionKind == FunctionKind.GetColorCount)
+            {
+                if (Arguments.Count != 5)
+                {
+                    semanticContext.GetErrors($"GetColorCount requiere 5 argumentos, pero se pasaron {Arguments.Count}", Line);
+                    return "<desconocido>";
+                }
 
-            else if (FunctionKind == FunctionKind.IsBrushColor)
-                throw new NotImplementedException();
+                // 1: string
+                if (Arguments[0].CheckType(semanticContext) != "string")
+                    semanticContext.GetErrors("GetColorCount: primer argumento debe ser string", Line);
 
-            else if (FunctionKind == FunctionKind.IsBrushSize)
-                throw new NotImplementedException();
+                // 2-5: int
+                for (int i = 1; i < 5; i++)
+                    if (Arguments[i].CheckType(semanticContext) != "int")
+                        semanticContext.GetErrors($"GetColorCount: argumento #{i + 1} debe ser int", Line);
 
-            else if (FunctionKind == FunctionKind.IsCanvasColor)
-                throw new NotImplementedException();
+                return "int";
+            }
 
-            return "desconocido";
+            // IsBrushColor(string color) : bool
+            if (FunctionKind == FunctionKind.IsBrushColor)
+            {
+                if (Arguments.Count != 1)
+                {
+                    semanticContext.GetErrors($"IsBrushColor requiere 1 argumento, pero se pasaron {Arguments.Count}", Line);
+                    return "<desconocido>";
+                }
+
+                if (Arguments[0].CheckType(semanticContext) != "string")
+                    semanticContext.GetErrors("IsBrushColor: argumento debe ser string", Line);
+
+                return "bool";
+            }
+
+            // IsBrushSize(int size) : bool
+            if (FunctionKind == FunctionKind.IsBrushSize)
+            {
+                if (Arguments.Count != 1)
+                {
+                    semanticContext.GetErrors($"IsBrushSize requiere 1 argumento, pero se pasaron {Arguments.Count}", Line);
+                    return "<desconocido>";
+                }
+                if (Arguments[0].CheckType(semanticContext) != "int")
+                    semanticContext.GetErrors("IsBrushSize: argumento debe ser int", Line);
+
+                return "bool";
+            }
+
+            // IsCanvasColor(string color, int vertical, int horizontal) : bool
+            if (FunctionKind == FunctionKind.IsCanvasColor)
+            {
+                if (Arguments.Count != 3)
+                {
+                    semanticContext.GetErrors($"IsCanvasColor requiere 3 argumentos, pero se pasaron {Arguments.Count}", Line);
+                    return "<desconocido>";
+                }
+
+                if (Arguments[0].CheckType(semanticContext) != "string")
+                    semanticContext.GetErrors("IsCanvasColor: primer argumento debe ser string", Line);
+
+                if (Arguments[1].CheckType(semanticContext) != "int")
+                    semanticContext.GetErrors("IsCanvasColor: segundo argumento debe ser int", Line);
+
+                if (Arguments[2].CheckType(semanticContext) != "int")
+                    semanticContext.GetErrors("IsCanvasColor: tercer argumento debe ser int", Line);
+
+                return "bool";
+            }
+
+            // Si llegamos aquí, es una función inexistente o no manejada
+            semanticContext.GetErrors($"Función desconocida '{FunctionKind}'", Line);
+
+            return "<desconocido>";
         }
     }
 
     public class InvalidExpressionNode : ExpressionNode
     {
         public string Why { get; }
+
         public InvalidExpressionNode(string why, int line) : base(line)
         {
             Why = why;
@@ -288,21 +369,28 @@ namespace Proyecto_Wall_E_Art
 
     public class ColorNode : InstructionNode
     {
-        public string Color { get; }
+        public ExpressionNode expression;
 
-        public ColorNode(string color, int line) : base(line)
+        public ColorNode(ExpressionNode expressionNode, int line) : base(line)
         {
-            if (string.IsNullOrEmpty(color))
-                throw new ArgumentException("Color invalido");
-
-            Color = color;
+            expression = expressionNode;
         }
 
         public override void Validate(SemanticContext context)
         {
-            //y puede venir de una varibale?
-            if (!context.ColorsTable.Contains(Color))
-                context.GetErrors($"Color '{Color}' no declarado", Line);
+            // 1) Tipo de la expresión pasada
+            var tipo = expression.CheckType(context);
+
+            // 2) Debe ser string
+            if (tipo != "string")
+                context.GetErrors($"Color espera un literal string, recibió '{tipo}'", Line);
+
+            // 3) Si es literal, revisar que esté en la tabla de colores permitidos
+            if (expression is LiteralNode lit && lit.Value is string colName)
+            {
+                if (!context.ColorsTable.Contains(colName))
+                    context.GetErrors($"Color '{colName}' no declarado", Line);
+            }
         }
     }
 
@@ -324,7 +412,9 @@ namespace Proyecto_Wall_E_Art
     public class DrawLineNode : InstructionNode
     {
         public ExpressionNode DirXExpression { get; }
+
         public ExpressionNode DirYExpression { get; }
+
         public ExpressionNode DistanceExpression { get; }
 
         public DrawLineNode(ExpressionNode dirXExpression, ExpressionNode dirYExpression, ExpressionNode distanceExpression, int line) : base(line)
@@ -344,7 +434,7 @@ namespace Proyecto_Wall_E_Art
             if (DirXExpression is LiteralNode litX && litX.Value is int corX && (corX > 1 || corX < -1))
                 context.GetErrors($"En DrawLine, el primer parametro debe ser 0, 1 o -1 ", Line);
 
-            if (DirXExpression is LiteralNode litY && litY.Value is int corY && (corY > 1 || corY < -1))
+            if (DirYExpression is LiteralNode litY && litY.Value is int corY && (corY > 1 || corY < -1))
                 context.GetErrors($"En DrawLine, el segundo parametro debe ser 0, 1 o -1 ", Line);
 
         }
@@ -359,7 +449,9 @@ namespace Proyecto_Wall_E_Art
         public DrawCircleNode(ExpressionNode dirXExpression, ExpressionNode dirYExpression, ExpressionNode radiusExpression, int line) : base(line)
         {
             DirXExpression = dirXExpression;
+
             DirYExpression = dirYExpression;
+
             RadiusExpression = radiusExpression;
         }
 
@@ -423,12 +515,19 @@ namespace Proyecto_Wall_E_Art
                 throw new ArgumentException("Variable invalida");
 
             Identifier = identifier;
+
             Expression = expression;
         }
 
         public override void Validate(SemanticContext context)
         {
             string expressionType = Expression.CheckType(context);
+
+            if (expressionType == "string")
+            {
+                context.GetErrors($"Asignacion no valida, no es posible asignar valores de tipo string", Line);
+                return;
+            }
 
             if (context.VariablesTable.TryGetValue(Identifier, out var variableType) && variableType != "desconocido" && variableType != expressionType)
                 context.GetErrors($"Variable {Identifier} ya es de tipo {variableType}, no se puede asignar '{expressionType}' ", Line);

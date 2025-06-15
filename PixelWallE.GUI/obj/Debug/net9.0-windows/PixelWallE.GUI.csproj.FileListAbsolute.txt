@@ -24,9 +24,9 @@ D:\1. Primer Año\Programación\Proyectos\Repitencia 1ro\2ndProjectWall-E\PixelW
 D:\1. Primer Año\Programación\Proyectos\Repitencia 1ro\2ndProjectWall-E\PixelWallE.GUI\obj\Debug\net9.0-windows\PixelWallE.GUI.pdb
 D:\1. Primer Año\Programación\Proyectos\Repitencia 1ro\2ndProjectWall-E\PixelWallE.GUI\obj\Debug\net9.0-windows\PixelWallE.GUI.genruntimeconfig.cache
 D:\1. Primer Año\Programación\Proyectos\Repitencia 1ro\2ndProjectWall-E\PixelWallE.GUI\obj\Debug\net9.0-windows\ref\PixelWallE.GUI.dll
-D:\1. Primer Año\Programación\Proyectos\Repitencia 1ro\2ndProjectWall-E\Wall-E Main\PixelWallE.GUI\bin\Debug\net9.0-windows\input.pw
 D:\1. Primer Año\Programación\Proyectos\Repitencia 1ro\2ndProjectWall-E\Wall-E Main\PixelWallE.GUI\bin\Debug\net9.0-windows\Proyecto Wall-E Art.deps.json
 D:\1. Primer Año\Programación\Proyectos\Repitencia 1ro\2ndProjectWall-E\Wall-E Main\PixelWallE.GUI\bin\Debug\net9.0-windows\Proyecto Wall-E Art.runtimeconfig.json
+D:\1. Primer Año\Programación\Proyectos\Repitencia 1ro\2ndProjectWall-E\Wall-E Main\PixelWallE.GUI\bin\Debug\net9.0-windows\input.pw
 D:\1. Primer Año\Programación\Proyectos\Repitencia 1ro\2ndProjectWall-E\Wall-E Main\PixelWallE.GUI\bin\Debug\net9.0-windows\Proyecto Wall-E Art.exe
 D:\1. Primer Año\Programación\Proyectos\Repitencia 1ro\2ndProjectWall-E\Wall-E Main\PixelWallE.GUI\bin\Debug\net9.0-windows\PixelWallE.GUI.exe
 D:\1. Primer Año\Programación\Proyectos\Repitencia 1ro\2ndProjectWall-E\Wall-E Main\PixelWallE.GUI\bin\Debug\net9.0-windows\PixelWallE.GUI.deps.json
@@ -44,6 +44,7 @@ D:\1. Primer Año\Programación\Proyectos\Repitencia 1ro\2ndProjectWall-E\Wall-E
 D:\1. Primer Año\Programación\Proyectos\Repitencia 1ro\2ndProjectWall-E\Wall-E Main\PixelWallE.GUI\obj\Debug\net9.0-windows\PixelWallE.GUI.AssemblyInfoInputs.cache
 D:\1. Primer Año\Programación\Proyectos\Repitencia 1ro\2ndProjectWall-E\Wall-E Main\PixelWallE.GUI\obj\Debug\net9.0-windows\PixelWallE.GUI.AssemblyInfo.cs
 D:\1. Primer Año\Programación\Proyectos\Repitencia 1ro\2ndProjectWall-E\Wall-E Main\PixelWallE.GUI\obj\Debug\net9.0-windows\PixelWallE.GUI.csproj.CoreCompileInputs.cache
+D:\1. Primer Año\Programación\Proyectos\Repitencia 1ro\2ndProjectWall-E\Wall-E Main\PixelWallE.GUI\obj\Debug\net9.0-windows\PixelWallE.GUI.sourcelink.json
 D:\1. Primer Año\Programación\Proyectos\Repitencia 1ro\2ndProjectWall-E\Wall-E Main\PixelWallE.GUI\obj\Debug\net9.0-windows\PixelWal.0C7B780A.Up2Date
 D:\1. Primer Año\Programación\Proyectos\Repitencia 1ro\2ndProjectWall-E\Wall-E Main\PixelWallE.GUI\obj\Debug\net9.0-windows\PixelWallE.GUI.dll
 D:\1. Primer Año\Programación\Proyectos\Repitencia 1ro\2ndProjectWall-E\Wall-E Main\PixelWallE.GUI\obj\Debug\net9.0-windows\refint\PixelWallE.GUI.dll
