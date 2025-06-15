@@ -51,10 +51,6 @@ namespace PixelWallE.GUI
             picCanvas.Image = bmp;
         }
 
-        /// <summary>
-        /// Muestra en un MessageBox todos los errores de ErrorsCollecter
-        /// filtrando por el tipo dado (ej: "LEXICAL", "SYNTAX") y con el título indicado.
-        /// </summary>
         private bool ShowErrors(string tipo, string titulo)
         {
             // Filtramos los errores de ErrorsCollecter de este tipo
@@ -106,15 +102,15 @@ namespace PixelWallE.GUI
 
             // 3) SEMÁNTICA
             var semCtx = new SemanticContext();
-            foreach (var kv in parser.labelsOfParse)
+            foreach (var labelKey in parser.labelsOfParse)
             {
-                if (semCtx.LabelsTable.ContainsKey(kv.Key))
-                    semCtx.GetErrors($"Etiqueta duplicada '{kv.Key}'", kv.Value);
+                if (semCtx.LabelsTable.ContainsKey(labelKey.Key))
+                    semCtx.GetErrors($"Etiqueta duplicada '{labelKey.Key}'", labelKey.Value);
                 else
-                    semCtx.LabelsTable.Add(kv.Key, kv.Value);
+                    semCtx.LabelsTable.Add(labelKey.Key, labelKey.Value);
             }
-            // foreach (var kv in parser.labelsOfParse)
-            //     semCtx.LabelsTable[kv.Key] = kv.Value;
+            // foreach (var labelKey in parser.labelsOfParse)
+            //     semCtx.LabelsTable[labelKey.Key] = labelKey.Value;
             program.Validate(semCtx);
 
             if (semCtx.Errors.Any())

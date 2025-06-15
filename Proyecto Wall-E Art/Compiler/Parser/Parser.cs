@@ -100,9 +100,10 @@ namespace Proyecto_Wall_E_Art
                 var labelToken = NextToken();
 
                 NextToken();//se traga newLine
-                
-                labelsTable.Add(labelToken.Text, labelToken.Line);
 
+                if (!labelsTable.TryAdd(labelToken.Text, labelToken.Line))
+                    ErrorsCollecter.Add("SYNTAX", $"La etiqueta '{labelToken.Text}' ya esta definida", labelToken.Line);
+                
                 return new LabelNode(labelToken.Text, labelToken.Line);
             }
 
@@ -473,18 +474,15 @@ namespace Proyecto_Wall_E_Art
             if (parameters.Count != 5)
                 ErrorsCollecter.Add("SYNTAX", "DrawRectangle solo requiere 5 parámetros", Current.Line);
 
-            var dirX = parameters[0];
-
-            var dirY = parameters[1];
-
-            var distance = parameters[2];
-
-            var width = parameters[3];
-
-            var height  = parameters[4];
-
-            return new DrawRectangleNode(dirX, dirY, distance, width, height, Current.Line);
+            var dirX  = parameters.ElementAtOrDefault(0) ?? new LiteralNode(0, Current.Line);
+            var dirY  = parameters.ElementAtOrDefault(1) ?? new LiteralNode(0, Current.Line);
+            var dist  = parameters.ElementAtOrDefault(2) ?? new LiteralNode(0, Current.Line);
+            var width = parameters.ElementAtOrDefault(3) ?? new LiteralNode(1, Current.Line);
+            var height= parameters.ElementAtOrDefault(4) ?? new LiteralNode(1, Current.Line);
+            
+            return new DrawRectangleNode(dirX, dirY, dist, width, height, Current.Line);
         }
+
 
         BinaryOperator MapToBinaryOperator(SyntaxKind syntaxKind)
         {

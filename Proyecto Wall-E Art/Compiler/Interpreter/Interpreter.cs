@@ -168,6 +168,7 @@ namespace Proyecto_Wall_E_Art
 
             walleX = cx; walleY = cy;
         }
+        
         private void DoDrawCircle(DrawCircleNode drawCircleNode)
         {
             int dx = EvaluateInt(drawCircleNode.DirXExpression);
