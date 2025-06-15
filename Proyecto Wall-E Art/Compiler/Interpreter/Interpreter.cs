@@ -116,7 +116,10 @@ namespace Proyecto_Wall_E_Art
                 DoAssignment(assignmentNode);
 
             else if (instructionNode is LabelNode)
-            { }
+            {} //los labelNode no deben hacer nada
+
+            else if (instructionNode is GoToNode)
+            {}//no se ejecuta xq ya se maneja en el start
 
             else
                 throw new Exception($"Instrucción no reconocida: {instructionNode.GetType().Name} en la línea {instructionNode.Line}");
@@ -408,12 +411,19 @@ namespace Proyecto_Wall_E_Art
 
                 else if (builtInFunctionNode.FunctionKind is FunctionKind.IsBrushColor)
                 {
-                    var color = (string)Evaluate(builtInFunctionNode.Arguments[0]);
-                    return currentColor == color;
+                    var colorName = (string)Evaluate(builtInFunctionNode.Arguments[0]);
+
+                    bool match = currentColor == colorName;
+
+                    return match ? 1 : 0;
                 }
 
                 else if (builtInFunctionNode.FunctionKind is FunctionKind.IsBrushSize)
-                    return brushSize == (int)Evaluate(builtInFunctionNode.Arguments[0]);
+                {
+                    bool boolValue = brushSize == (int)Evaluate(builtInFunctionNode.Arguments[0]);
+
+                    return boolValue ? 1 : 0;
+                }
 
                 else if (builtInFunctionNode.FunctionKind is FunctionKind.GetColorCount)
                 {
@@ -467,11 +477,11 @@ namespace Proyecto_Wall_E_Art
 
                     int size = canvas.GetLength(0);
 
-                    if (tx < 0 || tx >= size || ty < 0 || ty >= size)
-                        return false;
+                    bool inside = tx >= 0 && tx < size && ty >= 0 && ty < size;
 
-                    return canvas[tx, ty].ToString() == colorName;
+                    bool match = inside && canvas[tx, ty].ToString() == colorName;
 
+                    return match ? 1 : 0;
                 }
             }
 

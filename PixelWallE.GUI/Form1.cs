@@ -107,13 +107,18 @@ namespace PixelWallE.GUI
             // 3) SEMÁNTICA
             var semCtx = new SemanticContext();
             foreach (var kv in parser.labelsOfParse)
-                semCtx.LabelsTable[kv.Key] = kv.Value;
+            {
+                if (semCtx.LabelsTable.ContainsKey(kv.Key))
+                    semCtx.GetErrors($"Etiqueta duplicada '{kv.Key}'", kv.Value);
+                else
+                    semCtx.LabelsTable.Add(kv.Key, kv.Value);
+            }
+            // foreach (var kv in parser.labelsOfParse)
+            //     semCtx.LabelsTable[kv.Key] = kv.Value;
             program.Validate(semCtx);
 
             if (semCtx.Errors.Any())
             {
-                // Si prefieres usar el mismo helper, podrías volcar semCtx.Errors en ErrorsCollecter,
-                // o escribir uno similar que lea semCtx.Errors. Aquí un ejemplo rápido:
                 var texto = string.Join("\n", semCtx.Errors
                     .Select(err => $"[Línea {err.Line}] {err.Message}"));
                 MessageBox.Show("ERRORES SEMÁNTICOS:\n" + texto,
@@ -121,41 +126,6 @@ namespace PixelWallE.GUI
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
-
-
-
-            // // 1) Lectura del código
-            // var source = rtbCode.Text;
-
-            // // 2) Léxico
-            // var lexer = new Lexer(source);
-            // var tokens = lexer.LexAll().ToList();
-            // if (ErrorsCollecter.GetErrors().Any(e => e.Type == "LEXICAL"))
-            // {
-            //     MessageBox.Show("Errores léxicos detectados.");
-            //     return;
-            // }
-
-            // // 3) Parsing
-            // var parser = new Parser(tokens);
-            // var program = parser.ParseProgram();
-            // if (ErrorsCollecter.GetErrors().Any(e => e.Type == "SYNTAX"))
-            // {
-            //     MessageBox.Show("Errores sintácticos detectados.");
-            //     return;
-            // }
-
-            // // 4) Semántica
-            // var semCtx = new SemanticContext();
-            // foreach (var kv in parser.labelsOfParse)
-            //     semCtx.LabelsTable[kv.Key] = kv.Value;
-            // program.Validate(semCtx);
-            // if (semCtx.Errors.Any())
-            // {
-            //     var msg = string.Join("\n", semCtx.Errors.Select(err => $"L{err.Line}: {err.Message}"));
-            //     MessageBox.Show("Errores semánticos:\n" + msg, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            //     return;
-            // }
 
             // 5) Interpretación
             var interpreter = new Interpreter(program, canvasSize);

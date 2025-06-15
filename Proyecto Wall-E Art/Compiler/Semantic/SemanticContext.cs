@@ -13,7 +13,7 @@ namespace Proyecto_Wall_E_Art
 
         public string[]ColorsTable { get; } = new string[]
         {
-            "Red", "Green", "Blue", "Yellow", "Black", "White", "Orange", "Purple", "Pink", "Transparent"
+            "Red", "Green", "Blue", "Yellow", "Black", "White", "Orange", "Purple", "Transparent"
         };
 
         public List<SemanticError> Errors { get; } = new List<SemanticError>();

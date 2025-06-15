@@ -257,7 +257,7 @@ namespace Proyecto_Wall_E_Art
                 if (Arguments.Count != 5)
                 {
                     semanticContext.GetErrors($"GetColorCount requiere 5 argumentos, pero se pasaron {Arguments.Count}", Line);
-                    return "<desconocido>";
+                    return "desconocido";
                 }
 
                 // 1: string
@@ -278,13 +278,13 @@ namespace Proyecto_Wall_E_Art
                 if (Arguments.Count != 1)
                 {
                     semanticContext.GetErrors($"IsBrushColor requiere 1 argumento, pero se pasaron {Arguments.Count}", Line);
-                    return "<desconocido>";
+                    return "desconocido";
                 }
 
                 if (Arguments[0].CheckType(semanticContext) != "string")
                     semanticContext.GetErrors("IsBrushColor: argumento debe ser string", Line);
 
-                return "bool";
+                return "int";
             }
 
             // IsBrushSize(int size) : bool
@@ -293,12 +293,12 @@ namespace Proyecto_Wall_E_Art
                 if (Arguments.Count != 1)
                 {
                     semanticContext.GetErrors($"IsBrushSize requiere 1 argumento, pero se pasaron {Arguments.Count}", Line);
-                    return "<desconocido>";
+                    return "desconocido";
                 }
                 if (Arguments[0].CheckType(semanticContext) != "int")
                     semanticContext.GetErrors("IsBrushSize: argumento debe ser int", Line);
 
-                return "bool";
+                return "int";
             }
 
             // IsCanvasColor(string color, int vertical, int horizontal) : bool
@@ -307,7 +307,7 @@ namespace Proyecto_Wall_E_Art
                 if (Arguments.Count != 3)
                 {
                     semanticContext.GetErrors($"IsCanvasColor requiere 3 argumentos, pero se pasaron {Arguments.Count}", Line);
-                    return "<desconocido>";
+                    return "desconocido";
                 }
 
                 if (Arguments[0].CheckType(semanticContext) != "string")
@@ -319,13 +319,13 @@ namespace Proyecto_Wall_E_Art
                 if (Arguments[2].CheckType(semanticContext) != "int")
                     semanticContext.GetErrors("IsCanvasColor: tercer argumento debe ser int", Line);
 
-                return "bool";
+                return "int";
             }
 
             // Si llegamos aquí, es una función inexistente o no manejada
             semanticContext.GetErrors($"Función desconocida '{FunctionKind}'", Line);
 
-            return "<desconocido>";
+            return "desconocido";
         }
     }
 
