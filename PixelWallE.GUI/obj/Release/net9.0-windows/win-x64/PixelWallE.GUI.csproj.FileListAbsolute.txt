@@ -1,0 +1,26 @@
+D:\1. Primer Año\Programación\Proyectos\Repitencia 1ro\2ndProjectWall-E\Wall-E Main\PixelWallE.GUI\bin\Release\net9.0-windows\win-x64\Proyecto Wall-E Art.deps.json
+D:\1. Primer Año\Programación\Proyectos\Repitencia 1ro\2ndProjectWall-E\Wall-E Main\PixelWallE.GUI\bin\Release\net9.0-windows\win-x64\Proyecto Wall-E Art.runtimeconfig.json
+D:\1. Primer Año\Programación\Proyectos\Repitencia 1ro\2ndProjectWall-E\Wall-E Main\PixelWallE.GUI\bin\Release\net9.0-windows\win-x64\input.pw
+D:\1. Primer Año\Programación\Proyectos\Repitencia 1ro\2ndProjectWall-E\Wall-E Main\PixelWallE.GUI\bin\Release\net9.0-windows\win-x64\Proyecto Wall-E Art.exe
+D:\1. Primer Año\Programación\Proyectos\Repitencia 1ro\2ndProjectWall-E\Wall-E Main\PixelWallE.GUI\bin\Release\net9.0-windows\win-x64\PixelWallE.GUI.exe
+D:\1. Primer Año\Programación\Proyectos\Repitencia 1ro\2ndProjectWall-E\Wall-E Main\PixelWallE.GUI\bin\Release\net9.0-windows\win-x64\PixelWallE.GUI.deps.json
+D:\1. Primer Año\Programación\Proyectos\Repitencia 1ro\2ndProjectWall-E\Wall-E Main\PixelWallE.GUI\bin\Release\net9.0-windows\win-x64\PixelWallE.GUI.runtimeconfig.json
+D:\1. Primer Año\Programación\Proyectos\Repitencia 1ro\2ndProjectWall-E\Wall-E Main\PixelWallE.GUI\bin\Release\net9.0-windows\win-x64\PixelWallE.GUI.dll
+D:\1. Primer Año\Programación\Proyectos\Repitencia 1ro\2ndProjectWall-E\Wall-E Main\PixelWallE.GUI\bin\Release\net9.0-windows\win-x64\PixelWallE.GUI.pdb
+D:\1. Primer Año\Programación\Proyectos\Repitencia 1ro\2ndProjectWall-E\Wall-E Main\PixelWallE.GUI\bin\Release\net9.0-windows\win-x64\Microsoft.Win32.SystemEvents.dll
+D:\1. Primer Año\Programación\Proyectos\Repitencia 1ro\2ndProjectWall-E\Wall-E Main\PixelWallE.GUI\bin\Release\net9.0-windows\win-x64\System.Drawing.Common.dll
+D:\1. Primer Año\Programación\Proyectos\Repitencia 1ro\2ndProjectWall-E\Wall-E Main\PixelWallE.GUI\bin\Release\net9.0-windows\win-x64\System.Private.Windows.Core.dll
+D:\1. Primer Año\Programación\Proyectos\Repitencia 1ro\2ndProjectWall-E\Wall-E Main\PixelWallE.GUI\bin\Release\net9.0-windows\win-x64\Proyecto Wall-E Art.dll
+D:\1. Primer Año\Programación\Proyectos\Repitencia 1ro\2ndProjectWall-E\Wall-E Main\PixelWallE.GUI\bin\Release\net9.0-windows\win-x64\Proyecto Wall-E Art.pdb
+D:\1. Primer Año\Programación\Proyectos\Repitencia 1ro\2ndProjectWall-E\Wall-E Main\PixelWallE.GUI\obj\Release\net9.0-windows\win-x64\PixelWallE.GUI.csproj.AssemblyReference.cache
+D:\1. Primer Año\Programación\Proyectos\Repitencia 1ro\2ndProjectWall-E\Wall-E Main\PixelWallE.GUI\obj\Release\net9.0-windows\win-x64\PixelWallE.GUI.GeneratedMSBuildEditorConfig.editorconfig
+D:\1. Primer Año\Programación\Proyectos\Repitencia 1ro\2ndProjectWall-E\Wall-E Main\PixelWallE.GUI\obj\Release\net9.0-windows\win-x64\PixelWallE.GUI.AssemblyInfoInputs.cache
+D:\1. Primer Año\Programación\Proyectos\Repitencia 1ro\2ndProjectWall-E\Wall-E Main\PixelWallE.GUI\obj\Release\net9.0-windows\win-x64\PixelWallE.GUI.AssemblyInfo.cs
+D:\1. Primer Año\Programación\Proyectos\Repitencia 1ro\2ndProjectWall-E\Wall-E Main\PixelWallE.GUI\obj\Release\net9.0-windows\win-x64\PixelWallE.GUI.csproj.CoreCompileInputs.cache
+D:\1. Primer Año\Programación\Proyectos\Repitencia 1ro\2ndProjectWall-E\Wall-E Main\PixelWallE.GUI\obj\Release\net9.0-windows\win-x64\PixelWallE.GUI.sourcelink.json
+D:\1. Primer Año\Programación\Proyectos\Repitencia 1ro\2ndProjectWall-E\Wall-E Main\PixelWallE.GUI\obj\Release\net9.0-windows\win-x64\PixelWal.0C7B780A.Up2Date
+D:\1. Primer Año\Programación\Proyectos\Repitencia 1ro\2ndProjectWall-E\Wall-E Main\PixelWallE.GUI\obj\Release\net9.0-windows\win-x64\PixelWallE.GUI.dll
+D:\1. Primer Año\Programación\Proyectos\Repitencia 1ro\2ndProjectWall-E\Wall-E Main\PixelWallE.GUI\obj\Release\net9.0-windows\win-x64\refint\PixelWallE.GUI.dll
+D:\1. Primer Año\Programación\Proyectos\Repitencia 1ro\2ndProjectWall-E\Wall-E Main\PixelWallE.GUI\obj\Release\net9.0-windows\win-x64\PixelWallE.GUI.pdb
+D:\1. Primer Año\Programación\Proyectos\Repitencia 1ro\2ndProjectWall-E\Wall-E Main\PixelWallE.GUI\obj\Release\net9.0-windows\win-x64\PixelWallE.GUI.genruntimeconfig.cache
+D:\1. Primer Año\Programación\Proyectos\Repitencia 1ro\2ndProjectWall-E\Wall-E Main\PixelWallE.GUI\obj\Release\net9.0-windows\win-x64\ref\PixelWallE.GUI.dll

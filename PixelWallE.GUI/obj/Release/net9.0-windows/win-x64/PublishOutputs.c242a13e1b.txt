@@ -1,0 +1,7 @@
+D:\1. Primer Año\Programación\Proyectos\Repitencia 1ro\2ndProjectWall-E\Wall-E Main\PixelWallE.GUI\bin\Release\net9.0-windows\win-x64\publish\PixelWallE.GUI.pdb
+D:\1. Primer Año\Programación\Proyectos\Repitencia 1ro\2ndProjectWall-E\Wall-E Main\PixelWallE.GUI\bin\Release\net9.0-windows\win-x64\publish\Proyecto Wall-E Art.exe
+D:\1. Primer Año\Programación\Proyectos\Repitencia 1ro\2ndProjectWall-E\Wall-E Main\PixelWallE.GUI\bin\Release\net9.0-windows\win-x64\publish\Proyecto Wall-E Art.deps.json
+D:\1. Primer Año\Programación\Proyectos\Repitencia 1ro\2ndProjectWall-E\Wall-E Main\PixelWallE.GUI\bin\Release\net9.0-windows\win-x64\publish\Proyecto Wall-E Art.runtimeconfig.json
+D:\1. Primer Año\Programación\Proyectos\Repitencia 1ro\2ndProjectWall-E\Wall-E Main\PixelWallE.GUI\bin\Release\net9.0-windows\win-x64\publish\input.pw
+D:\1. Primer Año\Programación\Proyectos\Repitencia 1ro\2ndProjectWall-E\Wall-E Main\PixelWallE.GUI\bin\Release\net9.0-windows\win-x64\publish\Proyecto Wall-E Art.pdb
+D:\1. Primer Año\Programación\Proyectos\Repitencia 1ro\2ndProjectWall-E\Wall-E Main\PixelWallE.GUI\bin\Release\net9.0-windows\win-x64\publish\PixelWallE.GUI.exe
