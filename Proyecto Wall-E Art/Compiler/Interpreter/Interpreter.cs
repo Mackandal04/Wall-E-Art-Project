@@ -7,12 +7,16 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.Runtime.Versioning;
+[assembly: SupportedOSPlatform("windows")]
+
+
 
 namespace Proyecto_Wall_E_Art
 {
     public class Interpreter
     {
-        public event Action<int, int> PixelDrawn;
+        public event Action<int, int>? PixelDrawn;
         int walleX = 0;
         int walleY = 0;
         public string currentColor = "Transparent";
@@ -117,10 +121,10 @@ namespace Proyecto_Wall_E_Art
                 DoAssignment(assignmentNode);
 
             else if (instructionNode is LabelNode)
-            {} //los labelNode no deben hacer nada
+            { } //los labelNode no deben hacer nada
 
             else if (instructionNode is GoToNode)
-            {}//no se ejecuta xq ya se maneja en el start
+            { }//no se ejecuta xq ya se maneja en el start
 
             else
                 throw new Exception($"Instrucción no reconocida: {instructionNode.GetType().Name} en la línea {instructionNode.Line}");
@@ -169,7 +173,7 @@ namespace Proyecto_Wall_E_Art
 
             walleX = cx; walleY = cy;
         }
-        
+
         private void DoDrawCircle(DrawCircleNode drawCircleNode)
         {
             int dx = EvaluateInt(drawCircleNode.DirXExpression);
