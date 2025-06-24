@@ -80,11 +80,6 @@
           },
           "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.203/PortableRuntimeIdentifierGraph.json"
         }
-      },
-      "runtimes": {
-        "win-x64": {
-          "#import": []
-        }
       }
     },
     "D:\\1. Primer Año\\Programación\\Proyectos\\Repitencia 1ro\\2ndProjectWall-E\\Wall-E Main\\Proyecto Wall-E Art\\Proyecto Wall-E Art.csproj": {

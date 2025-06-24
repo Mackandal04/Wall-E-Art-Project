@@ -6,6 +6,7 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using Proyecto_Wall_E_Art;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace PixelWallE.GUI
 {
@@ -109,8 +110,6 @@ namespace PixelWallE.GUI
                 else
                     semCtx.LabelsTable.Add(labelKey.Key, labelKey.Value);
             }
-            // foreach (var labelKey in parser.labelsOfParse)
-            //     semCtx.LabelsTable[labelKey.Key] = labelKey.Value;
             program.Validate(semCtx);
 
             if (semCtx.Errors.Any())
@@ -123,14 +122,56 @@ namespace PixelWallE.GUI
                 return;
             }
 
-            // 5) Interpretación
-            var interpreter = new Interpreter(program, canvasSize);
-            interpreter.Start();
+            // Parámetro de escalado
+            int cellSize = 16;
 
-            // 6) Obtener Bitmap y mostrar
-            var bmp = interpreter.ShowCanvasGrid(cellSize: 16);
+            // 1) Crear bitmap escalado y dibujar cuadricula
+            int pixelCount = canvasSize;                      // número lógico de píxeles
+            var bmp = new Bitmap(pixelCount * cellSize,
+                                 pixelCount * cellSize);
+            using (var g = Graphics.FromImage(bmp))
+            {
+                g.InterpolationMode = InterpolationMode.NearestNeighbor;
+                g.Clear(Color.White);
+
+                // Dibuja líneas de cuadricula muy suaves
+                using var pen = new Pen(Color.FromArgb(50, Color.Gray));
+                // verticales
+                for (int x = 0; x <= pixelCount; x++)
+                    g.DrawLine(pen, x * cellSize, 0,
+                                   x * cellSize, pixelCount * cellSize);
+                // horizontales
+                for (int y = 0; y <= pixelCount; y++)
+                    g.DrawLine(pen, 0, y * cellSize,
+                                   pixelCount * cellSize, y * cellSize);
+            }
+
+            // Asigna el bitmap al PictureBox
             picCanvas.Image?.Dispose();
             picCanvas.Image = bmp;
+
+            // 2) Crear intérprete y suscribirse al evento PixelDrawn
+            var interpreter = new Interpreter(program, canvasSize);
+            interpreter.PixelDrawn += (px, py) =>
+            {
+                // calculamos la región en el bitmap donde pintaremos
+                int rx = px * cellSize;
+                int ry = py * cellSize;
+
+                // encolar en UI thread
+                picCanvas.BeginInvoke((Action)(() =>
+                {
+                    using var g2 = Graphics.FromImage(picCanvas.Image);
+                    g2.InterpolationMode = InterpolationMode.NearestNeighbor;
+                    // rellena el bloque cellSize×cellSize
+                    var color = ColorTranslator.FromHtml(interpreter.currentColor);
+                    g2.FillRectangle(
+                        new SolidBrush(color),
+                        rx, ry, cellSize, cellSize);
+                    picCanvas.Refresh();
+                }));
+            };
+            Task.Run(() => interpreter.Start());
         }
     }
 }
