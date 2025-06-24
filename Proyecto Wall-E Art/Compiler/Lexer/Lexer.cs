@@ -8,8 +8,7 @@ namespace Proyecto_Wall_E_Art
 {
     public sealed class Lexer
     {
-        readonly string
-        Text;
+        readonly string Text;
         int position = 0;
         int line = 1;
         char Current => Peek(0);

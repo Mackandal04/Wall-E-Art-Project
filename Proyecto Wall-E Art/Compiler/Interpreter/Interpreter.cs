@@ -12,9 +12,10 @@ namespace Proyecto_Wall_E_Art
 {
     public class Interpreter
     {
+        public event Action<int, int> PixelDrawn;
         int walleX = 0;
         int walleY = 0;
-        string currentColor = "Transparent";
+        public string currentColor = "Transparent";
         int brushSize = 1;
 
         //guarda int o bool
@@ -312,6 +313,8 @@ namespace Proyecto_Wall_E_Art
                     int tx = paintX + ox, ty = paintY + oy;
                     if (tx >= 0 && tx < size && ty >= 0 && ty < size)
                         canvas[tx, ty] = ColorFromName(currentColor);
+                    PixelDrawn?.Invoke(tx, ty);
+                    System.Threading.Thread.Sleep(10);
                 }
             }
         }
