@@ -80,13 +80,13 @@ Wall‑E-Art-Project/
 ### 1. Aplicación Windows Forms
 
 ```bash
-cd PixelWallE.GUI
+abra la terminal en la carpeta PixelWallE.GUI
 dotnet run
-# Comienza el proyecto de windowsForm
+Comienza el proyecto de windowsForm
 ```
 
 1. Escribe o carga (`.pw`) tu script.
-2. Ajusta tamaño del canvas.(hacer siempre)
+2. Ajusta tamaño del canvas
 3. Pulsa **Ejecutar** para ver el resultado con cuadricula.
 
 ---
@@ -109,5 +109,3 @@ Algunos ejemplos faciles de probar:
    n <- n - 1
    GoTo[loop](n > 0)
    ```
-3. **FloodFill.pw**  
-   Dibuja un contorno y luego lo rellena con `Fill()`.
