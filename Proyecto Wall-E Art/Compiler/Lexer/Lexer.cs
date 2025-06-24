@@ -48,15 +48,16 @@ namespace Proyecto_Wall_E_Art
             }
 
             if (char.IsDigit(Current))
-                    return LexNumber();
+                return LexNumber();
 
             if (char.IsLetter(Current))
                 return LexIdentifierOrLabel();
 
-            string text = Text.Substring(position, 1);
-            var errorToken = new SyntaxToken(SyntaxKind.ErrorToken, line, position, text, null!);
+            char character = Current;
+            int tokenLine = line;
             Advance();
-            return errorToken;
+            string text = character.ToString();
+            return new SyntaxToken(SyntaxKind.ErrorToken, tokenLine, position - 1, text, null!);
         }
 
         SyntaxToken LexNewLine()

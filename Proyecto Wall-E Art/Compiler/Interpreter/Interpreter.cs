@@ -137,10 +137,42 @@ namespace Proyecto_Wall_E_Art
 
         private void DoFill(FillNode fillNode)
         {
-            var targetColor = canvas[walleX, walleY];
-            var newColor = ColorFromName(currentColor);
-            if (targetColor == newColor) return;
-            FloodFill(walleX, walleY, targetColor, newColor);
+            int size = canvas.GetLength(0);
+            Color targetColor = canvas[walleX, walleY];
+            Color newColor = ColorFromName(currentColor);
+
+            // Casos especiales
+            if (targetColor == newColor) return; // Mismo color
+            if (newColor == ColorFromName("Transparent")) return; // No pinta
+
+            Queue<(int x, int y)> queue = new Queue<(int, int)>();
+            queue.Enqueue((walleX, walleY));
+
+            bool[,] visited = new bool[size, size];
+            visited[walleX, walleY] = true;
+
+            int[] dx = { 0, 0, -1, 1 };
+            int[] dy = { -1, 1, 0, 0 };
+
+            while (queue.Count > 0)
+            {
+                var (x, y) = queue.Dequeue();
+                canvas[x, y] = newColor;
+                PixelDrawn?.Invoke(x, y);
+
+                for (int i = 0; i < 4; i++)
+                {
+                    int nx = x + dx[i];
+                    int ny = y + dy[i];
+
+                    if (nx >= 0 && nx < size && ny >= 0 && ny < size &&
+                        !visited[nx, ny] && canvas[nx, ny] == targetColor)
+                    {
+                        visited[nx, ny] = true;
+                        queue.Enqueue((nx, ny));
+                    }
+                }
+            }
         }
 
         private void DoDrawRectangle(DrawRectangleNode drawRectangleNode)
@@ -260,30 +292,6 @@ namespace Proyecto_Wall_E_Art
 
         #region HELPERS
 
-
-        private void FloodFill(int sx, int sy, Color target, Color replace)
-        {
-            int size = canvas.GetLength(0);
-
-            var stack = new Stack<(int, int)>();
-
-            stack.Push((sx, sy));
-
-            while (stack.Count > 0)
-            {
-                var (cx, cy) = stack.Pop();
-
-                if (cx < 0 || cx >= size || cy < 0 || cy >= size) continue;
-
-                if (canvas[cx, cy] != target) continue;
-
-                canvas[cx, cy] = replace;
-
-                stack.Push((cx + 1, cy)); stack.Push((cx - 1, cy));
-
-                stack.Push((cx, cy + 1)); stack.Push((cx, cy - 1));
-            }
-        }
 
         private void PlotCirclePoints(int cx, int cy, int dx, int dy)
         {
