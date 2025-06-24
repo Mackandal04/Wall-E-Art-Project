@@ -54,7 +54,6 @@ Desarrollado en C# con Windows Forms y .NET, ideal para unir lógica de programa
 ```
 Wall‑E-Art-Project/
 ├─ Proyecto_Wall_E_Art/       # Lógica (lexer, parser, AST, semántico, intérprete)
-├─ PixelWallE(Ejecutable)/    # Ejecutable de facil acceso del proyecto en WindowsForm
 ├─ PixelWallE.GUI/            # WinForms GUI (Form1, Program.cs, PixelPictureBox)
 └─ README.md                  # Documentación (este fichero)
 ```
