@@ -16,6 +16,71 @@ namespace PixelWallE.GUI
         public Form1()
         {
             InitializeComponent();
+
+            // — Crear panel izquierdo (editor) — 
+            var panelIzq = new Panel
+            {
+                Dock = DockStyle.Left,
+                Width = 350,
+                BorderStyle = BorderStyle.FixedSingle
+            };
+            // 1a) Sub-panel para controles (arriba)
+            var panelControles = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Top,
+                AutoSize = false,
+                Height = btnRun.Height + 140,
+                Padding = new Padding(20),
+                FlowDirection = FlowDirection.LeftToRight,
+            };
+
+            btnResize.Margin = new Padding(3);
+            btnResize.Height = 50;
+            btnLoad.Margin   = new Padding(3);
+            btnLoad.Height = 40;
+            btnSave.Margin   = new Padding(3);
+            btnSave.Height = 60;
+            btnSave.Width = 140;
+            btnRun.Margin    = new Padding(3);
+            btnRun.Height = 50;
+            btnRun.Width = 90;
+            nudCanvasSize.Margin = new Padding(3);
+            nudCanvasSize.Height = 35;
+
+            // Le añadimos los botones y nud:
+            panelControles.Controls.Add(nudCanvasSize);
+            panelControles.Controls.Add(btnResize);
+            panelControles.Controls.Add(btnLoad);
+            panelControles.Controls.Add(btnSave);
+            panelControles.Controls.Add(btnRun);
+
+            // 1b) Editor ocupa el resto
+            this.Controls.Remove(rtbCode);
+            rtbCode.Dock = DockStyle.Fill;
+
+            // Aniades sub-panel y editor al izquierdo
+            panelIzq.Controls.Add(rtbCode);
+            panelIzq.Controls.Add(panelControles);
+
+            // 2) Panel derecho para el canvas
+            var panelDer = new Panel
+            {
+                Dock = DockStyle.Fill,
+                BorderStyle = BorderStyle.FixedSingle,
+                AutoScroll = true,
+//                BorderStyle = BorderStyle.FixedSingle
+            };
+            panelDer.Width = 0;
+            panelDer.Height = 0;
+
+            this.Controls.Remove(picCanvas);
+            picCanvas.Dock = DockStyle.Fill;
+            picCanvas.SizeMode = PictureBoxSizeMode.Normal;
+            panelDer.Controls.Add(picCanvas);
+
+            // 3) Finalmente re-añades a Form
+            this.Controls.Add(panelDer);
+            this.Controls.Add(panelIzq);
         }
 
         private void btnLoad_Click(object sender, EventArgs e)

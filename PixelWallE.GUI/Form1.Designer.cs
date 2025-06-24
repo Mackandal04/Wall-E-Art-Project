@@ -1,4 +1,4 @@
-﻿using System.Drawing.Drawing2D;
+﻿﻿using System.Drawing.Drawing2D;
 using System.Windows.Forms;
 using PixelWallE.GUI;
 
@@ -89,7 +89,7 @@ partial class Form1
         this.btnResize.Location = new System.Drawing.Point(100, 208);
         this.btnResize.Name = "btnResize";
         this.btnResize.Size = new System.Drawing.Size(80, 23);
-        this.btnResize.Text = "Redimensionar";
+        this.btnResize.Text = "Ajustar";
         this.btnResize.TabIndex = 2;
         this.btnResize.UseVisualStyleBackColor = true;
         this.btnResize.Click += new System.EventHandler(this.btnResize_Click);
@@ -143,13 +143,6 @@ partial class Form1
         this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
         this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
         this.ClientSize = new System.Drawing.Size(800, 700);
-        this.Controls.Add(this.picCanvas);
-        this.Controls.Add(this.btnRun);
-        this.Controls.Add(this.btnSave);
-        this.Controls.Add(this.btnLoad);
-        this.Controls.Add(this.btnResize);
-        this.Controls.Add(this.nudCanvasSize);
-        this.Controls.Add(this.rtbCode);
         this.Name = "Form1";
         this.Text = "Pixel Wall-E GUI";
 
