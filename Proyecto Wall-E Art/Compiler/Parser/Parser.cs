@@ -8,8 +8,8 @@ namespace Proyecto_Wall_E_Art
 {
     public class Parser
     {
-        public IReadOnlyDictionary<string, int> labelsOfParse => labelsTable;
-        List<SyntaxToken> Tokens;
+        public IReadOnlyDictionary<string, int> labelsOfParse => labelsTable; //tabla de los labels y sus lineas
+        List<SyntaxToken> Tokens;//lista de los tokens a parsear
         Dictionary<string, int> labelsTable = new Dictionary<string, int>();
         int Position;
         SyntaxToken Current => LookAhead(0);//acutal token
@@ -22,8 +22,11 @@ namespace Proyecto_Wall_E_Art
             Position = 0;
         }
 
+        #region HELPERS
+
         SyntaxToken LookAhead(int advance)
         {
+            //obtiene un token mas adelante sin consumirlo
             int index = Position + advance;
 
             if (index < Tokens.Count)
@@ -32,8 +35,9 @@ namespace Proyecto_Wall_E_Art
             return Tokens.Last();
         }
 
-        SyntaxToken NextToken()//Se traga el token y sigue para el sgte
+        SyntaxToken NextToken()
         {
+            //Se traga el token actual y sigue para el sgte
             var token = Current;
             Position++;
             return token;
@@ -41,7 +45,7 @@ namespace Proyecto_Wall_E_Art
 
         SyntaxToken Match(SyntaxKind kind, string errorMsg)
         {
-            //Valida el token y sigue, de lo contrario lanza error y para
+            //Valida q el token actual coincida con el esperado y sigue, de lo contrario lanza error y para
             if (Current.Kind == kind)
                 return NextToken();
 
@@ -55,6 +59,8 @@ namespace Proyecto_Wall_E_Art
 
             return wrong;
         }
+        
+        #endregion
 
         public ProgramNode ParseProgram()
         {
@@ -66,10 +72,10 @@ namespace Proyecto_Wall_E_Art
 
             while (Current.Kind == SyntaxKind.WhitespaceToken)
                 NextToken();
-                
+
             if (Current.Kind != SyntaxKind.SpawnKeyword)
                 ErrorsCollecter.Add("SYNTAX", "El programa debe comenzar con Spawn", Current.Line);
-            
+
 
             else
                 instructions.Add(ParseSpawn());
@@ -91,6 +97,8 @@ namespace Proyecto_Wall_E_Art
             return new ProgramNode(instructions, Current.Line);
         }
         
+
+        #region PARSEO
         InstructionNode ParseInstruction()
         {
             //Escoge el parseo segun el token
@@ -202,6 +210,118 @@ namespace Proyecto_Wall_E_Art
             return ParseBinaryExpression(parentPrecedence);
         }
 
+        InstructionNode ParseAssignment()
+        {
+            var idToken = Match(SyntaxKind.IdentifierToken, "Se esperaba identifier");
+
+            Match(SyntaxKind.AssignmentToken, "Se esperaba '<-'");
+
+            var expr = ParseExpression();
+
+            return new AssignmentNode(idToken.Text, expr, idToken.Line);
+        }
+
+        InstructionNode ParseSpawn()
+        {
+            Match(SyntaxKind.SpawnKeyword, "Se esperaba un 'Spawn' ");
+
+            var parameters = ParseParameters();
+
+            if (parameters.Count != 2)
+                ErrorsCollecter.Add("SYNTAX", "Spawn requiere solo 2 parametros", Current.Line);
+
+            //Si spawn tiene coordenadas las asignamos , si no => (0,0)
+            var xExpr = parameters.ElementAtOrDefault(0) ?? new LiteralNode(0, Current.Line);
+
+            var yExpr = parameters.ElementAtOrDefault(1) ?? new LiteralNode(0, Current.Line);
+
+            return new SpawnNode(xExpr, yExpr, Current.Line);
+        }
+
+        InstructionNode ParseColor()
+        {
+            Match(SyntaxKind.ColorKeyword, "Se esperaba 'Color' ");
+
+            var parameters = ParseParameters();
+
+            var expression = parameters.FirstOrDefault() ?? new LiteralNode("Transparent",Current.Line);
+
+            return new ColorNode(expression, expression.Line);
+        }
+
+        InstructionNode ParseSize()
+        {
+            Match(SyntaxKind.SizeKeyword, "Se esperaba 'Size' ");
+
+            var parameters = ParseParameters();
+
+            if (parameters.Count != 1)
+                ErrorsCollecter.Add("SYNTAX", "Size solo requiere un parametro", Current.Line);
+
+            var sizeArg = parameters.ElementAtOrDefault(0) ?? new LiteralNode(1, Current.Line);
+
+            return new SizeNode(sizeArg, Current.Line);
+        }
+
+        InstructionNode ParseDrawLine()
+        {
+            Match(SyntaxKind.DrawLineKeyword, "Se esperaba 'DrawLine'");
+
+            var parameters = ParseParameters();
+
+            if (parameters.Count != 3)
+                ErrorsCollecter.Add("SYNTAX", "DrawLine requiere 3 parámetros", Current.Line);
+
+            var firstArg = parameters.ElementAtOrDefault(0) ?? new LiteralNode(0, Current.Line);
+
+            var secondArg = parameters.ElementAtOrDefault(1) ?? new LiteralNode(0, Current.Line);
+
+            var thirdArg = parameters.ElementAtOrDefault(2) ?? new LiteralNode(0, Current.Line);
+
+            return new DrawLineNode(firstArg, secondArg, thirdArg, Current.Line);            
+        }
+
+        InstructionNode ParseDrawCircle()
+        {
+            Match(SyntaxKind.DrawCircleKeyword, "Se esperaba 'DrawCircle'");
+
+            var parameters = ParseParameters();
+
+            if (parameters.Count != 3)
+                ErrorsCollecter.Add("SYNTAX", "DrawCircle requiere 3 parámetros", Current.Line);
+
+            var firstArg = parameters.ElementAtOrDefault(0) ?? new LiteralNode(0, Current.Line);
+
+            var secondArg = parameters.ElementAtOrDefault(1) ?? new LiteralNode(0, Current.Line);
+
+            var thirdArg = parameters.ElementAtOrDefault(2) ?? new LiteralNode(0, Current.Line);
+
+            return new DrawCircleNode(firstArg, secondArg, thirdArg, Current.Line);
+        }
+
+        InstructionNode ParseDrawRectangle()
+        {
+            Match(SyntaxKind.DrawRectangleKeyword, "Se esperaba 'DrawRectangle'");
+
+            var parameters = ParseParameters();
+
+            if (parameters.Count != 5)
+                ErrorsCollecter.Add("SYNTAX", "DrawRectangle solo requiere 5 parámetros", Current.Line);
+
+            var dirX  = parameters.ElementAtOrDefault(0) ?? new LiteralNode(0, Current.Line);
+            var dirY  = parameters.ElementAtOrDefault(1) ?? new LiteralNode(0, Current.Line);
+            var dist  = parameters.ElementAtOrDefault(2) ?? new LiteralNode(0, Current.Line);
+            var width = parameters.ElementAtOrDefault(3) ?? new LiteralNode(1, Current.Line);
+            var height= parameters.ElementAtOrDefault(4) ?? new LiteralNode(1, Current.Line);
+            
+            return new DrawRectangleNode(dirX, dirY, dist, width, height, Current.Line);
+        }
+
+        #endregion
+
+        #region PARSEO DE EXPRESIONES
+
+        
         ExpressionNode ParseBinaryExpression(int parentPrecedence)
         {
             ExpressionNode left = ParseUnaryOrPrimary();
@@ -376,113 +496,7 @@ namespace Proyecto_Wall_E_Art
             return new InvalidExpressionNode($"Token inesperado '{wrong.Text}'", wrong.Line);
         }
 
-        InstructionNode ParseAssignment()
-        {
-            var idToken = Match(SyntaxKind.IdentifierToken, "Se esperaba identifier");
-
-            Match(SyntaxKind.AssignmentToken, "Se esperaba '<-'");
-
-            var expr = ParseExpression();
-
-            return new AssignmentNode(idToken.Text, expr, idToken.Line);
-        }
-
-        InstructionNode ParseSpawn()
-        {
-            Match(SyntaxKind.SpawnKeyword, "Se esperaba un 'Spawn' ");
-
-            var parameters = ParseParameters();
-
-            if (parameters.Count != 2)
-                ErrorsCollecter.Add("SYNTAX", "Spawn requiere solo 2 parametros", Current.Line);
-
-            //Si spawn tiene coordenadas las asignamos , si no => (0,0)
-            var xExpr = parameters.ElementAtOrDefault(0) ?? new LiteralNode(0, Current.Line);
-
-            var yExpr = parameters.ElementAtOrDefault(1) ?? new LiteralNode(0, Current.Line);
-
-            return new SpawnNode(xExpr, yExpr, Current.Line);
-        }
-
-        InstructionNode ParseColor()
-        {
-            Match(SyntaxKind.ColorKeyword, "Se esperaba 'Color' ");
-
-            var parameters = ParseParameters();
-
-            var expression = parameters.FirstOrDefault() ?? new LiteralNode("Transparent",Current.Line);
-
-            return new ColorNode(expression, expression.Line);
-        }
-
-        InstructionNode ParseSize()
-        {
-            Match(SyntaxKind.SizeKeyword, "Se esperaba 'Size' ");
-
-            var parameters = ParseParameters();
-
-            if (parameters.Count != 1)
-                ErrorsCollecter.Add("SYNTAX", "Size solo requiere un parametro", Current.Line);
-
-            var sizeArg = parameters.ElementAtOrDefault(0) ?? new LiteralNode(1, Current.Line);
-
-            return new SizeNode(sizeArg, Current.Line);
-        }
-
-        InstructionNode ParseDrawLine()
-        {
-            Match(SyntaxKind.DrawLineKeyword, "Se esperaba 'DrawLine'");
-
-            var parameters = ParseParameters();
-
-            if (parameters.Count != 3)
-                ErrorsCollecter.Add("SYNTAX", "DrawLine requiere 3 parámetros", Current.Line);
-
-            var firstArg = parameters.ElementAtOrDefault(0) ?? new LiteralNode(0, Current.Line);
-
-            var secondArg = parameters.ElementAtOrDefault(1) ?? new LiteralNode(0, Current.Line);
-
-            var thirdArg = parameters.ElementAtOrDefault(2) ?? new LiteralNode(0, Current.Line);
-
-            return new DrawLineNode(firstArg, secondArg, thirdArg, Current.Line);            
-        }
-
-        InstructionNode ParseDrawCircle()
-        {
-            Match(SyntaxKind.DrawCircleKeyword, "Se esperaba 'DrawCircle'");
-
-            var parameters = ParseParameters();
-
-            if (parameters.Count != 3)
-                ErrorsCollecter.Add("SYNTAX", "DrawCircle requiere 3 parámetros", Current.Line);
-
-            var firstArg = parameters.ElementAtOrDefault(0) ?? new LiteralNode(0, Current.Line);
-
-            var secondArg = parameters.ElementAtOrDefault(1) ?? new LiteralNode(0, Current.Line);
-
-            var thirdArg = parameters.ElementAtOrDefault(2) ?? new LiteralNode(0, Current.Line);
-
-            return new DrawCircleNode(firstArg, secondArg, thirdArg, Current.Line);
-        }
-
-        InstructionNode ParseDrawRectangle()
-        {
-            Match(SyntaxKind.DrawRectangleKeyword, "Se esperaba 'DrawRectangle'");
-
-            var parameters = ParseParameters();
-
-            if (parameters.Count != 5)
-                ErrorsCollecter.Add("SYNTAX", "DrawRectangle solo requiere 5 parámetros", Current.Line);
-
-            var dirX  = parameters.ElementAtOrDefault(0) ?? new LiteralNode(0, Current.Line);
-            var dirY  = parameters.ElementAtOrDefault(1) ?? new LiteralNode(0, Current.Line);
-            var dist  = parameters.ElementAtOrDefault(2) ?? new LiteralNode(0, Current.Line);
-            var width = parameters.ElementAtOrDefault(3) ?? new LiteralNode(1, Current.Line);
-            var height= parameters.ElementAtOrDefault(4) ?? new LiteralNode(1, Current.Line);
-            
-            return new DrawRectangleNode(dirX, dirY, dist, width, height, Current.Line);
-        }
-
+        #endregion
 
         BinaryOperator MapToBinaryOperator(SyntaxKind syntaxKind)
         {

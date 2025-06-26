@@ -16,7 +16,10 @@ namespace Proyecto_Wall_E_Art
 {
     public class Interpreter
     {
-        public event Action<int, int>? PixelDrawn;
+        public event Action<int, int,Color>? PixelDrawn;//tiene q ver con el visual(eventos para UI)
+        public bool shouldStop{ get; private set; }
+        public string LastErrorMessage { get; private set; } = "";
+        //estado actual del wallE
         int walleX = 0;
         int walleY = 0;
         public string currentColor = "Transparent";
@@ -63,7 +66,7 @@ namespace Proyecto_Wall_E_Art
                 if (programNode.Instructions[flag] is GoToNode goToNode)
                 {
                     if (EvaluateBool(goToNode.Condition) && LabelsTable.ContainsKey(goToNode.Label))
-                    {
+                    {//si la condicion es true y existe el label
                         flag = LabelsTable[goToNode.Label];
                         continue;
                     }
@@ -142,9 +145,12 @@ namespace Proyecto_Wall_E_Art
             Color newColor = ColorFromName(currentColor);
 
             // Casos especiales
-            if (targetColor == newColor) return; // Mismo color
-            if (newColor == ColorFromName("Transparent")) return; // No pinta
+            //nuevo color igual al actual v nuevo color igual a transparent
+            if (targetColor == newColor) return;
+            if (newColor == ColorFromName("Transparent")) return;//no pinta
 
+
+            //cola para guardar los pixeles conectados
             Queue<(int x, int y)> queue = new Queue<(int, int)>();
             queue.Enqueue((walleX, walleY));
 
@@ -156,9 +162,9 @@ namespace Proyecto_Wall_E_Art
 
             while (queue.Count > 0)
             {
-                var (x, y) = queue.Dequeue();
+                var (x, y) = queue.Dequeue();//extraer el sgte pixel
                 canvas[x, y] = newColor;
-                PixelDrawn?.Invoke(x, y);
+                PixelDrawn?.Invoke(x, y,newColor);
 
                 for (int i = 0; i < 4; i++)
                 {
@@ -168,6 +174,7 @@ namespace Proyecto_Wall_E_Art
                     if (nx >= 0 && nx < size && ny >= 0 && ny < size &&
                         !visited[nx, ny] && canvas[nx, ny] == targetColor)
                     {
+                        //si es un pixel valido y no se ha visitado agg y visitalo
                         visited[nx, ny] = true;
                         queue.Enqueue((nx, ny));
                     }
@@ -234,27 +241,35 @@ namespace Proyecto_Wall_E_Art
 
         private void DoDrawLine(DrawLineNode drawLineNode)
         {
-            int dirX = EvaluateInt(drawLineNode.DirXExpression);
-
-            int dirY = EvaluateInt(drawLineNode.DirYExpression);
-
-            int dist = EvaluateInt(drawLineNode.DistanceExpression);
-
-            if (dirX < -1 || dirX > 1 || dirY < -1 || dirY > 1)
-                throw new Exception($"DrawLine: dirección inválida ({dirX},{dirY}) en línea {drawLineNode.Line}. " + "Sólo se permiten -1, 0 o 1.");
-
-            for (int i = 0; i <= dist; i++)
+            try
             {
-                int paintX = walleX + (dirX * i);
+                int dirX = EvaluateInt(drawLineNode.DirXExpression);
 
-                int paintY = walleY + (dirY * i);
+                int dirY = EvaluateInt(drawLineNode.DirYExpression);
 
-                Draw(paintX, paintY);
+                int dist = EvaluateInt(drawLineNode.DistanceExpression);
+
+                if (dirX < -1 || dirX > 1 || dirY < -1 || dirY > 1)
+                    throw new Exception($"DrawLine: dirección inválida ({dirX},{dirY}) en línea {drawLineNode.Line}. " + "Sólo se permiten -1, 0 o 1.");
+
+                for (int i = 0; i <= dist; i++)
+                {
+                    int paintX = walleX + (dirX * i);
+
+                    int paintY = walleY + (dirY * i);
+
+                    Draw(paintX, paintY);
+                }
+
+                walleX += dirX * dist;
+
+                walleY += dirY * dist;
             }
-
-            walleX += dirX * dist;
-
-            walleY += dirY * dist;
+            catch (Exception ex)
+            {
+                Stop($"Error en DrawLine:{ex.Message}");
+                ErrorsCollecter.Add("RUNTIME", ex.Message, drawLineNode.Line);
+            }
         }
 
         private void DoSize(SizeNode sizeNode)
@@ -282,7 +297,7 @@ namespace Proyecto_Wall_E_Art
         {
             walleX = EvaluateInt(spawnNode.XExpression);
 
-            walleY = EvaluateInt(spawnNode.YExpression);
+            walleY= EvaluateInt(spawnNode.YExpression);
 
             if (walleX < 0 || walleY < 0 || walleX > canvas.GetLength(0) || walleY > canvas.GetLength(1))
                 throw new Exception($"Sapwneo no valido, Wall-E fuera de rango");
@@ -292,7 +307,11 @@ namespace Proyecto_Wall_E_Art
 
         #region HELPERS
 
-
+        public void Stop(string errorMessage)
+        {
+            shouldStop = true;
+            LastErrorMessage = errorMessage; 
+        }
         private void PlotCirclePoints(int cx, int cy, int dx, int dy)
         {
             Draw(cx + dx, cy + dy);
@@ -323,9 +342,12 @@ namespace Proyecto_Wall_E_Art
                 for (int oy = -r; oy <= r; oy++)
                 {
                     int tx = paintX + ox, ty = paintY + oy;
-                    if (tx >= 0 && tx < size && ty >= 0 && ty < size)
-                        canvas[tx, ty] = ColorFromName(currentColor);
-                    PixelDrawn?.Invoke(tx, ty);
+                    if (tx < 0 || tx >= size || ty < 0 || ty >= size)
+                        continue;
+
+                    canvas[tx, ty] = ColorFromName(currentColor);//pinta un pixel
+                        
+                    PixelDrawn?.Invoke(tx, ty,canvas[tx,ty]);//lanza un evento para actualizar la UI en tiempo real
                     System.Threading.Thread.Sleep(10);
                 }
             }
